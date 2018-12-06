@@ -135,13 +135,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         
         private List<InetSocketAddress> myAddrs;
 
-        public QuorumServer(long id, InetSocketAddress addr,
-                InetSocketAddress electionAddr, InetSocketAddress clientAddr) {
+        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, InetSocketAddress clientAddr) {
             this(id, addr, electionAddr, clientAddr, LearnerType.PARTICIPANT);
         }
 
-        public QuorumServer(long id, InetSocketAddress addr,
-                InetSocketAddress electionAddr) {
+        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr) {
             this(id, addr, electionAddr, (InetSocketAddress)null, LearnerType.PARTICIPANT);
         }
 

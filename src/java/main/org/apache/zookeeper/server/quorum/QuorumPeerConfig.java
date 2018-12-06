@@ -59,10 +59,10 @@ import org.apache.zookeeper.server.util.VerifyingFileFactory;
 public class QuorumPeerConfig {
     private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerConfig.class);
     private static final int UNSET_SERVERID = -1;
-    public static final String nextDynamicConfigFileSuffix = ".dynamic.next";
-
     private static boolean standaloneEnabled = true;
     private static boolean reconfigEnabled = false;
+    public static final String nextDynamicConfigFileSuffix = ".dynamic.next";
+
 
     protected InetSocketAddress clientPortAddress;
     protected InetSocketAddress secureClientPortAddress;
@@ -130,10 +130,7 @@ public class QuorumPeerConfig {
         LOG.info("Reading configuration from: " + path);
        
         try {
-            File configFile = (new VerifyingFileFactory.Builder(LOG)
-                .warnForRelativePath()
-                .failForNonExistingPath()
-                .build()).create(path);
+            File configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath().failForNonExistingPath().build()).create(path);
                 
             Properties cfg = new Properties();
             FileInputStream in = new FileInputStream(configFile);
@@ -228,8 +225,7 @@ public class QuorumPeerConfig {
      * @throws IOException
      * @throws ConfigException
      */
-    public void parseProperties(Properties zkProp)
-    throws IOException, ConfigException {
+    public void parseProperties(Properties zkProp) throws IOException, ConfigException {
         int clientPort = 0;
         int secureClientPort = 0;
         String clientPortAddress = null;
@@ -325,33 +321,26 @@ public class QuorumPeerConfig {
         }
 
         if (!quorumEnableSasl && quorumServerRequireSasl) {
-            throw new IllegalArgumentException(
-                    QuorumAuth.QUORUM_SASL_AUTH_ENABLED
-                            + " is disabled, so cannot enable "
-                            + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
+            throw new IllegalArgumentException(QuorumAuth.QUORUM_SASL_AUTH_ENABLED
+                            + " is disabled, so cannot enable " + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
         }
         if (!quorumEnableSasl && quorumLearnerRequireSasl) {
-            throw new IllegalArgumentException(
-                    QuorumAuth.QUORUM_SASL_AUTH_ENABLED
-                            + " is disabled, so cannot enable "
-                            + QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED);
+            throw new IllegalArgumentException(QuorumAuth.QUORUM_SASL_AUTH_ENABLED
+                            + " is disabled, so cannot enable " + QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED);
         }
         // If quorumpeer learner is not auth enabled then self won't be able to
         // join quorum. So this condition is ensuring that the quorumpeer learner
         // is also auth enabled while enabling quorum server require sasl.
         if (!quorumLearnerRequireSasl && quorumServerRequireSasl) {
-            throw new IllegalArgumentException(
-                    QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED
-                            + " is disabled, so cannot enable "
-                            + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
+            throw new IllegalArgumentException(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED
+                            + " is disabled, so cannot enable " + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
         }
 
         // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
         // PurgeTxnLog.purge(File, File, int) will not allow to purge less
         // than 3.
         if (snapRetainCount < MIN_SNAP_RETAIN_COUNT) {
-            LOG.warn("Invalid autopurge.snapRetainCount: " + snapRetainCount
-                    + ". Defaulting to " + MIN_SNAP_RETAIN_COUNT);
+            LOG.warn("Invalid autopurge.snapRetainCount: " + snapRetainCount + ". Defaulting to " + MIN_SNAP_RETAIN_COUNT);
             snapRetainCount = MIN_SNAP_RETAIN_COUNT;
         }
 
@@ -368,8 +357,7 @@ public class QuorumPeerConfig {
                 throw new IllegalArgumentException("clientPortAddress is set but clientPort is not set");
             }
         } else if (clientPortAddress != null) {
-            this.clientPortAddress = new InetSocketAddress(
-                    InetAddress.getByName(clientPortAddress), clientPort);
+            this.clientPortAddress = new InetSocketAddress(InetAddress.getByName(clientPortAddress), clientPort);
             LOG.info("clientPortAddress is {}", this.clientPortAddress.toString());
         } else {
             this.clientPortAddress = new InetSocketAddress(clientPort);
@@ -382,8 +370,7 @@ public class QuorumPeerConfig {
                 throw new IllegalArgumentException("secureClientPortAddress is set but secureClientPort is not set");
             }
         } else if (secureClientPortAddress != null) {
-            this.secureClientPortAddress = new InetSocketAddress(
-                    InetAddress.getByName(secureClientPortAddress), secureClientPort);
+            this.secureClientPortAddress = new InetSocketAddress(InetAddress.getByName(secureClientPortAddress), secureClientPort);
             LOG.info("secureClientPortAddress is {}", this.secureClientPortAddress.toString());
         } else {
             this.secureClientPortAddress = new InetSocketAddress(secureClientPort);
@@ -401,8 +388,7 @@ public class QuorumPeerConfig {
         maxSessionTimeout = maxSessionTimeout == -1 ? tickTime * 20 : maxSessionTimeout;
 
         if (minSessionTimeout > maxSessionTimeout) {
-            throw new IllegalArgumentException(
-                    "minSessionTimeout must not be larger than maxSessionTimeout");
+            throw new IllegalArgumentException("minSessionTimeout must not be larger than maxSessionTimeout");
         }          
 
         // backward compatibility - dynamic configuration in the same file as
@@ -428,11 +414,9 @@ public class QuorumPeerConfig {
         String sslAuthProp = "zookeeper.authProvider." + System.getProperty(ZKConfig.SSL_AUTHPROVIDER, "x509");
         if (System.getProperty(sslAuthProp) == null) {
             if ("zookeeper.authProvider.x509".equals(sslAuthProp)) {
-                System.setProperty("zookeeper.authProvider.x509",
-                        "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
+                System.setProperty("zookeeper.authProvider.x509", "org.apache.zookeeper.server.auth.X509AuthenticationProvider");
             } else {
-                throw new ConfigException("No auth provider configured for the SSL authentication scheme '"
-                        + System.getProperty(ZKConfig.SSL_AUTHPROVIDER) + "'.");
+                throw new ConfigException("No auth provider configured for the SSL authentication scheme '" + System.getProperty(ZKConfig.SSL_AUTHPROVIDER) + "'.");
             }
         }
     }
@@ -467,15 +451,13 @@ public class QuorumPeerConfig {
      */
     public static void writeDynamicConfig(final String dynamicConfigFilename,
                                           final QuorumVerifier qv,
-                                          final boolean needKeepVersion)
-            throws IOException {
+                                          final boolean needKeepVersion) throws IOException {
 
         new AtomicFileWritingIdiom(new File(dynamicConfigFilename), new WriterStatement() {
             @Override
             public void write(Writer out) throws IOException {
                 Properties cfg = new Properties();
-                cfg.load( new StringReader(
-                        qv.toString()));
+                cfg.load( new StringReader(qv.toString()));
 
                 List<String> servers = new ArrayList<String>();
                 for (Entry<Object, Object> entry : cfg.entrySet()) {
@@ -484,9 +466,7 @@ public class QuorumPeerConfig {
                         continue;
 
                     String value = entry.getValue().toString().trim();
-                    servers.add(key
-                            .concat("=")
-                            .concat(value));
+                    servers.add(key.concat("=").concat(value));
                 }
 
                 Collections.sort(servers);
@@ -505,8 +485,7 @@ public class QuorumPeerConfig {
      */
     public static void editStaticConfig(final String configFileStr,
                                         final String dynamicFileStr,
-                                        final boolean eraseClientPortAddress)
-            throws IOException {
+                                        final boolean eraseClientPortAddress) throws IOException {
         // Some tests may not have a static config file.
         if (configFileStr == null)
             return;
@@ -585,8 +564,7 @@ public class QuorumPeerConfig {
         }          
     }
 
-    void setupQuorumPeerConfig(Properties prop, boolean configBackwardCompatibilityMode)
-            throws IOException, ConfigException {
+    void setupQuorumPeerConfig(Properties prop, boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
         quorumVerifier = parseDynamicConfig(prop, electionAlg, true, configBackwardCompatibilityMode);
         setupMyId();
         setupClientPort();
@@ -651,8 +629,7 @@ public class QuorumPeerConfig {
            if (eAlg != 0) {
                for (QuorumServer s : qv.getVotingMembers().values()) {
                    if (s.electionAddr == null)
-                       throw new IllegalArgumentException(
-                               "Missing election port for server: " + s.id);
+                       throw new IllegalArgumentException("Missing election port for server: " + s.id);
                }
            }   
         }
@@ -687,10 +664,8 @@ public class QuorumPeerConfig {
         }
         QuorumServer qs = quorumVerifier.getAllMembers().get(serverId);
         if (clientPortAddress != null && qs != null && qs.clientAddr != null) {
-            if ((!clientPortAddress.getAddress().isAnyLocalAddress()
-                    && !clientPortAddress.equals(qs.clientAddr)) ||
-                    (clientPortAddress.getAddress().isAnyLocalAddress()
-                            && clientPortAddress.getPort() != qs.clientAddr.getPort()))
+            if ((!clientPortAddress.getAddress().isAnyLocalAddress() && !clientPortAddress.equals(qs.clientAddr)) ||
+                    (clientPortAddress.getAddress().isAnyLocalAddress() && clientPortAddress.getPort() != qs.clientAddr.getPort()))
                 throw new ConfigException("client address for this server (id = " + serverId +
                         ") in static config file is " + clientPortAddress +
                         " is different from client address found in dynamic file: " + qs.clientAddr);
@@ -700,8 +675,7 @@ public class QuorumPeerConfig {
 
     private void setupPeerType() {
         // Warn about inconsistent peer type
-        LearnerType roleByServersList = quorumVerifier.getObservingMembers().containsKey(serverId) ? LearnerType.OBSERVER
-                : LearnerType.PARTICIPANT;
+        LearnerType roleByServersList = quorumVerifier.getObservingMembers().containsKey(serverId) ? LearnerType.OBSERVER : LearnerType.PARTICIPANT;
         if (roleByServersList != peerType) {
             LOG.warn("Peer type from servers list (" + roleByServersList
                     + ") doesn't match peerType (" + peerType

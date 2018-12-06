@@ -65,8 +65,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  */
 @InterfaceAudience.Public
 public class QuorumPeerMain {
-    private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerMain.class);
 
+    private static final Logger LOG = LoggerFactory.getLogger(QuorumPeerMain.class);
     private static final String USAGE = "Usage: QuorumPeerMain configfile";
 
     protected QuorumPeer quorumPeer;
@@ -105,11 +105,10 @@ public class QuorumPeerMain {
         System.exit(0);
     }
 
-    protected void initializeAndRun(String[] args)
-        throws ConfigException, IOException, AdminServerException
+    protected void initializeAndRun(String[] args) throws ConfigException, IOException, AdminServerException
     {
         QuorumPeerConfig config = new QuorumPeerConfig();
-        if (args.length == 1) {
+        if (args.length == 1) {  //如果有参数
             config.parse(args[0]);
         }
 
@@ -122,16 +121,13 @@ public class QuorumPeerMain {
         if (args.length == 1 && config.isDistributed()) {
             runFromConfig(config);
         } else {
-            LOG.warn("Either no config or no quorum defined in config, running "
-                    + " in standalone mode");
+            LOG.warn("Either no config or no quorum defined in config, running " + " in standalone mode");
             // there is only server in the quorum -- run as standalone
             ZooKeeperServerMain.main(args);
         }
     }
 
-    public void runFromConfig(QuorumPeerConfig config)
-            throws IOException, AdminServerException
-    {
+    public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
       try {
           ManagedUtil.registerLog4jMBeans();
       } catch (JMException e) {

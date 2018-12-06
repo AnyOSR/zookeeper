@@ -46,18 +46,18 @@ public final class VerifyingFileFactory {
         return file;
     }
 
+    //如果file不存在，则抛出一个异常
     private void doFailForNonExistingPath(File file) {
         if (!file.exists()) {
-            throw new IllegalArgumentException(file.toString()
-                    + " file is missing");
+            throw new IllegalArgumentException(file.toString() + " file is missing");
         }
     }
 
+    //如果file是一个相对路径，日志输出一个warn
     private void doWarnForRelativePath(File file) {
         if(file.isAbsolute()) return;
-        if(file.getPath().substring(0, 2).equals("."+File.separator)) return;
-        log.warn(file.getPath()+" is relative. Prepend ."
-                +File.separator+" to indicate that you're sure!");
+        if(file.getPath().substring(0, 2).equals("."+File.separator)) return;  //如果是以 .和File.separator 开头 也算绝对路径？
+        log.warn(file.getPath()+" is relative. Prepend ." +File.separator+" to indicate that you're sure!");
     }
 
     public static class Builder {
