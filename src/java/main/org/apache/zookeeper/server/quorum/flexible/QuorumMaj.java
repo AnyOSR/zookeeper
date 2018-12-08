@@ -69,13 +69,13 @@ public class QuorumMaj implements QuorumVerifier {
     public QuorumMaj(Map<Long, QuorumServer> allMembers) {
         this.allMembers = allMembers;
         for (QuorumServer qs : allMembers.values()) {
-            if (qs.type == LearnerType.PARTICIPANT) {
+            if (qs.type == LearnerType.PARTICIPANT) {           // PARTICIPANT  votingMembers
                 votingMembers.put(Long.valueOf(qs.id), qs);
-            } else {
+            } else {                                            // OBSERVER   observingMembers
                 observingMembers.put(Long.valueOf(qs.id), qs);
             }
         }
-        half = votingMembers.size() / 2;
+        half = votingMembers.size() / 2;                       // 计算过半数
     }
 
     public QuorumMaj(Properties props) throws ConfigException {
@@ -83,10 +83,10 @@ public class QuorumMaj implements QuorumVerifier {
             String key = entry.getKey().toString();
             String value = entry.getValue().toString();
 
-            if (key.startsWith("server.")) {
+            if (key.startsWith("server.")) {   //key 以 server.开头
                 int dot = key.indexOf('.');
-                long sid = Long.parseLong(key.substring(dot + 1));
-                QuorumServer qs = new QuorumServer(sid, value);
+                long sid = Long.parseLong(key.substring(dot + 1));      // server id
+                QuorumServer qs = new QuorumServer(sid, value);         // 根据id和地址信息 构建QuorumServer
                 allMembers.put(Long.valueOf(sid), qs);
                 if (qs.type == LearnerType.PARTICIPANT)
                     votingMembers.put(Long.valueOf(sid), qs);

@@ -543,7 +543,7 @@ public class QuorumPeerConfig {
        }                   
     }
     
-    
+    //根据配置文件构建QuorumVerifier，主要构建server信息
     private static QuorumVerifier createQuorumVerifier(Properties dynamicConfigProp, boolean isHierarchical) throws ConfigException{
        if(isHierarchical){
             return new QuorumHierarchical(dynamicConfigProp);

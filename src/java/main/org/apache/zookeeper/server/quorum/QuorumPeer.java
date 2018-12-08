@@ -77,7 +77,7 @@ import org.slf4j.LoggerFactory;
  * This class manages the quorum protocol. There are three states this server
  * can be in:
  * <ol>
- * <li>Leader election - each server will elect a leader (proposing itself as a
+ * <li>Leader election - each server will elect a leader (proposing itself as a     三种状态： leader选举  leader follower
  * leader initially).</li>
  * <li>Follower - the server will synchronize with the leader and replicate any
  * transactions.</li>
@@ -188,9 +188,10 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
-        private static String[] splitWithLeadingHostname(String s)
-                throws ConfigException
-        {
+        //将address信息构造成一个数组 以：分割
+        // []:a：b
+        // a:b:c
+        private static String[] splitWithLeadingHostname(String s) throws ConfigException {
             /* Does it start with an IPv6 literal? */
             if (s.startsWith("[")) {
                 int i = s.indexOf("]:");
@@ -209,16 +210,20 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
+        //server config的格式：host:port:port   host:port:port:type
+        //client config的格式：port             host:port
         private static final String wrongFormat = " does not have the form server_config or server_config;client_config"+
         " where server_config is host:port:port or host:port:port:type and client_config is port or host:port";
 
+        //地址信息以 ; 分开
+        // 第一部分是server信息(用于选举？)
+        // 第二部分是client信息(用于向客户端提供服务？)
         public QuorumServer(long sid, String addressStr) throws ConfigException {
             // LOG.warn("sid = " + sid + " addressStr = " + addressStr);
             this.id = sid;
             String serverClientParts[] = addressStr.split(";");
             String serverParts[] = splitWithLeadingHostname(serverClientParts[0]);
-            if ((serverClientParts.length > 2) || (serverParts.length < 3)
-                    || (serverParts.length > 4)) {
+            if ((serverClientParts.length > 2) || (serverParts.length < 3) || (serverParts.length > 4)) {
                 throw new ConfigException(addressStr + wrongFormat);
             }
 
@@ -232,8 +237,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 // is client_config a host:port or just a port
                 hostname = (clientParts.length == 2) ? clientParts[0] : "0.0.0.0";
                 try {
-                    clientAddr = new InetSocketAddress(hostname,
-                            Integer.parseInt(clientParts[clientParts.length - 1]));
+                    clientAddr = new InetSocketAddress(hostname, Integer.parseInt(clientParts[clientParts.length - 1]));
                     //LOG.warn("Set clientAddr to " + clientAddr);
                 } catch (NumberFormatException e) {
                     throw new ConfigException("Address unresolved: " + hostname + ":" + clientParts[clientParts.length - 1]);
@@ -242,14 +246,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             // server_config should be either host:port:port or host:port:port:type
             try {
-                addr = new InetSocketAddress(serverParts[0],
-                        Integer.parseInt(serverParts[1]));
+                addr = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[1]));
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
             }
             try {
-                electionAddr = new InetSocketAddress(serverParts[0], 
-                        Integer.parseInt(serverParts[2]));
+                electionAddr = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[2]));
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }
@@ -263,19 +265,16 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             setMyAddrs();
         }
 
-        public QuorumServer(long id, InetSocketAddress addr,
-                    InetSocketAddress electionAddr, LearnerType type) {
+        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, LearnerType type) {
             this(id, addr, electionAddr, (InetSocketAddress)null, type);
         }
 
-        public QuorumServer(long id, InetSocketAddress addr,
-                InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
+        public QuorumServer(long id, InetSocketAddress addr, InetSocketAddress electionAddr, InetSocketAddress clientAddr, LearnerType type) {
             this.id = id;
             this.addr = addr;
             this.electionAddr = electionAddr;
-            this.type = type;
             this.clientAddr = clientAddr;
-
+            this.type = type;
             setMyAddrs();
         }
 
@@ -360,6 +359,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
         }
 
+        //剔除掉特定的address
         private List<InetSocketAddress> excludedSpecialAddresses(List<InetSocketAddress> addrs) {
             List<InetSocketAddress> included = new ArrayList<InetSocketAddress>();
             InetAddress wcAddr = new InetSocketAddress(0).getAddress();
@@ -387,11 +387,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     /*
-     * A peer can either be participating, which implies that it is willing to
+     * A peer can either be participating, which implies that it is willing to    PARTICIPANT参与投票 选举
      * both vote in instances of consensus and to elect or become a Leader, or
      * it may be observing in which case it isn't.
      *
-     * We need this distinction to decide which ServerState to move to when
+     * We need this distinction to decide which ServerState to move to when       不参与
      * conditions change (e.g. which state to become after LOOKING).
      */
     public enum LearnerType {

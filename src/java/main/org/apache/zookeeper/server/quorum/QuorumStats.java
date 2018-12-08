@@ -53,8 +53,7 @@ public class QuorumStats {
                 sb.append(" ").append(f);
             }
             sb.append("\n");            
-        }else if(state.equals(Provider.FOLLOWING_STATE) 
-                || state.equals(Provider.OBSERVING_STATE)){
+        }else if(state.equals(Provider.FOLLOWING_STATE) || state.equals(Provider.OBSERVING_STATE)){
             sb.append("Leader: ");
             String[] ldr=getQuorumPeers();
             if(ldr.length>0)
