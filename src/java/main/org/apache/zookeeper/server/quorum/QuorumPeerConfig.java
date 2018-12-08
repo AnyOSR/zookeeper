@@ -141,7 +141,7 @@ public class QuorumPeerConfig {
                 in.close();
             }
             
-            parseProperties(cfg);
+            parseProperties(cfg);   //解析配置文件，填充属性值
         } catch (IOException e) {
             throw new ConfigException("Error processing " + path, e);
         } catch (IllegalArgumentException e) {
@@ -266,7 +266,7 @@ public class QuorumPeerConfig {
                 electionAlg = Integer.parseInt(value);
             } else if (key.equals("quorumListenOnAllIPs")) {
                 quorumListenOnAllIPs = Boolean.parseBoolean(value);
-            } else if (key.equals("peerType")) {
+            } else if (key.equals("peerType")) {                   // peerType属性值只能为observer 或者  participant
                 if (value.toLowerCase().equals("observer")) {
                     peerType = LearnerType.OBSERVER;
                 } else if (value.toLowerCase().equals("participant")) {
@@ -283,7 +283,7 @@ public class QuorumPeerConfig {
                 snapRetainCount = Integer.parseInt(value);
             } else if (key.equals("autopurge.purgeInterval")) {
                 purgeInterval = Integer.parseInt(value);
-            } else if (key.equals("standaloneEnabled")) {
+            } else if (key.equals("standaloneEnabled")) {          // standaloneEnabled只能为 true 或者 false
                 if (value.toLowerCase().equals("true")) {
                     setStandaloneEnabled(true);
                 } else if (value.toLowerCase().equals("false")) {
@@ -292,7 +292,7 @@ public class QuorumPeerConfig {
                     throw new ConfigException("Invalid option " + value + " for standalone mode. Choose 'true' or 'false.'");
                 }
             } else if (key.equals("reconfigEnabled")) {
-                if (value.toLowerCase().equals("true")) {
+                if (value.toLowerCase().equals("true")) {         // reconfigEnabled 只能为 true或者false
                     setReconfigEnabled(true);
                 } else if (value.toLowerCase().equals("false")) {
                     setReconfigEnabled(false);
@@ -320,20 +320,18 @@ public class QuorumPeerConfig {
             }
         }
 
+        //对于SASL参数相关的校验
         if (!quorumEnableSasl && quorumServerRequireSasl) {
-            throw new IllegalArgumentException(QuorumAuth.QUORUM_SASL_AUTH_ENABLED
-                            + " is disabled, so cannot enable " + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
+            throw new IllegalArgumentException(QuorumAuth.QUORUM_SASL_AUTH_ENABLED + " is disabled, so cannot enable " + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
         }
         if (!quorumEnableSasl && quorumLearnerRequireSasl) {
-            throw new IllegalArgumentException(QuorumAuth.QUORUM_SASL_AUTH_ENABLED
-                            + " is disabled, so cannot enable " + QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED);
+            throw new IllegalArgumentException(QuorumAuth.QUORUM_SASL_AUTH_ENABLED + " is disabled, so cannot enable " + QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED);
         }
         // If quorumpeer learner is not auth enabled then self won't be able to
         // join quorum. So this condition is ensuring that the quorumpeer learner
         // is also auth enabled while enabling quorum server require sasl.
         if (!quorumLearnerRequireSasl && quorumServerRequireSasl) {
-            throw new IllegalArgumentException(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED
-                            + " is disabled, so cannot enable " + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
+            throw new IllegalArgumentException(QuorumAuth.QUORUM_LEARNER_SASL_AUTH_REQUIRED + " is disabled, so cannot enable " + QuorumAuth.QUORUM_SERVER_SASL_AUTH_REQUIRED);
         }
 
         // Reset to MIN_SNAP_RETAIN_COUNT if invalid (less than 3)
@@ -344,14 +342,14 @@ public class QuorumPeerConfig {
             snapRetainCount = MIN_SNAP_RETAIN_COUNT;
         }
 
-        if (dataDir == null) {
+        if (dataDir == null) {                     // 需要设置 dataDir
             throw new IllegalArgumentException("dataDir is not set");
         }
         if (dataLogDir == null) {
             dataLogDir = dataDir;
         }
 
-        if (clientPort == 0) {
+        if (clientPort == 0) {                     // 需要设置 clientPort
             LOG.info("clientPort is not set");
             if (clientPortAddress != null) {
                 throw new IllegalArgumentException("clientPortAddress is set but clientPort is not set");
@@ -364,7 +362,7 @@ public class QuorumPeerConfig {
             LOG.info("clientPortAddress is {}", this.clientPortAddress.toString());
         }
 
-        if (secureClientPort == 0) {
+        if (secureClientPort == 0) {                // 安全端口的校验
             LOG.info("secureClientPort is not set");
             if (secureClientPortAddress != null) {
                 throw new IllegalArgumentException("secureClientPortAddress is set but secureClientPort is not set");
@@ -376,7 +374,8 @@ public class QuorumPeerConfig {
             this.secureClientPortAddress = new InetSocketAddress(secureClientPort);
             LOG.info("secureClientPortAddress is {}", this.secureClientPortAddress.toString());
         }
-        if (this.secureClientPortAddress != null) {
+
+        if (this.secureClientPortAddress != null) {      // 如果设置了secure，则需要配置SSL
             configureSSLAuth();
         }
 
@@ -393,6 +392,7 @@ public class QuorumPeerConfig {
 
         // backward compatibility - dynamic configuration in the same file as
         // static configuration params see writeDynamicConfig()
+        // 向下兼容
         if (dynamicConfigFileStr == null) {
             setupQuorumPeerConfig(zkProp, true);
             if (isDistributed() && isReconfigEnabled()) {
@@ -449,9 +449,7 @@ public class QuorumPeerConfig {
     /**
      * Writes dynamic configuration file
      */
-    public static void writeDynamicConfig(final String dynamicConfigFilename,
-                                          final QuorumVerifier qv,
-                                          final boolean needKeepVersion) throws IOException {
+    public static void writeDynamicConfig(final String dynamicConfigFilename, final QuorumVerifier qv, final boolean needKeepVersion) throws IOException {
 
         new AtomicFileWritingIdiom(new File(dynamicConfigFilename), new WriterStatement() {
             @Override
@@ -483,9 +481,7 @@ public class QuorumPeerConfig {
      * "eraseClientPortAddress" should be set true.
      * It should also updates dynamic file pointer on reconfig.
      */
-    public static void editStaticConfig(final String configFileStr,
-                                        final String dynamicFileStr,
-                                        final boolean eraseClientPortAddress) throws IOException {
+    public static void editStaticConfig(final String configFileStr, final String dynamicFileStr, final boolean eraseClientPortAddress) throws IOException {
         // Some tests may not have a static config file.
         if (configFileStr == null)
             return;
@@ -518,9 +514,7 @@ public class QuorumPeerConfig {
                         || key.startsWith("group")
                         || key.startsWith("weight")
                         || key.startsWith("dynamicConfigFile")
-                        || (eraseClientPortAddress
-                            && (key.startsWith("clientPort")
-                                || key.startsWith("clientPortAddress")))) {
+                        || (eraseClientPortAddress && (key.startsWith("clientPort") || key.startsWith("clientPortAddress")))) {
                         // not writing them back to static file
                         continue;
                     }
@@ -531,9 +525,7 @@ public class QuorumPeerConfig {
 
                 // updates the dynamic file pointer
                 String dynamicConfigFilePath = PathUtils.normalizeFileSystemPath(dynamicFile.getCanonicalPath());
-                out.write("dynamicConfigFile="
-                         .concat(dynamicConfigFilePath)
-                         .concat("\n"));
+                out.write("dynamicConfigFile=".concat(dynamicConfigFilePath).concat("\n"));
             }
         });
     }
@@ -564,6 +556,7 @@ public class QuorumPeerConfig {
         }          
     }
 
+    //设置集群peer配置
     void setupQuorumPeerConfig(Properties prop, boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
         quorumVerifier = parseDynamicConfig(prop, electionAlg, true, configBackwardCompatibilityMode);
         setupMyId();
@@ -579,19 +572,23 @@ public class QuorumPeerConfig {
      * @throws IOException
      * @throws ConfigException
      */
-    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings,
-	   boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
+    public static QuorumVerifier parseDynamicConfig(Properties dynamicConfigProp, int eAlg, boolean warnings, boolean configBackwardCompatibilityMode) throws IOException, ConfigException {
        boolean isHierarchical = false;
         for (Entry<Object, Object> entry : dynamicConfigProp.entrySet()) {
             String key = entry.getKey().toString().trim();                    
-            if (key.startsWith("group") || key.startsWith("weight")) {
+            if (key.startsWith("group") || key.startsWith("weight")) {    // 如果存在以 group或者weight 开头的key
                isHierarchical = true;
-            } else if (!configBackwardCompatibilityMode && !key.startsWith("server.") && !key.equals("version")){ 
+
+            // 如果 configBackwardCompatibilityMode为true，则配置文件里面的参数值不管是啥都不会异常
+            // 如果为false，则如果配置文件存在一个key,且其既不以server.开头，也不以version开头，则报异常
+            // 动态文件里面的配置key只能以server.或者version开头？
+            } else if (!configBackwardCompatibilityMode && !key.startsWith("server.") && !key.equals("version")){
                LOG.info(dynamicConfigProp.toString());
                throw new ConfigException("Unrecognised parameter: " + key);                
             }
         }
-        
+
+        // 创建QuorumVerifier
         QuorumVerifier qv = createQuorumVerifier(dynamicConfigProp, isHierarchical);
                
         int numParticipators = qv.getVotingMembers().size();
@@ -616,8 +613,7 @@ public class QuorumPeerConfig {
         } else {
             if (warnings) {
                 if (numParticipators <= 2) {
-                    LOG.warn("No server failure will be tolerated. " +
-                        "You need at least 3 servers.");
+                    LOG.warn("No server failure will be tolerated. " + "You need at least 3 servers.");
                 } else if (numParticipators % 2 == 0) {
                     LOG.warn("Non-optimial configuration, consider an odd number of servers.");
                 }

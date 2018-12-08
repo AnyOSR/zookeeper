@@ -43,8 +43,8 @@ import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
  * each server has a weight. We obtain a quorum if we get more than half
  * of the total weight of a group for a majority of groups.
  * 
- * The configuration of quorums uses two parameters: group and weight. 
- * Groups are sets of ZooKeeper servers, and we set a group by passing
+ * The configuration of quorums uses two parameters: group and weight.    集群配置两个参数  group weight
+ * Groups are sets of ZooKeeper servers, and we set a group by passing    group是一系列zkServer的集合  冒号隔开的serverId来表示
  * a colon-separated list of server ids. It is also necessary to assign
  * weights to server. Here is an example of a configuration that creates
  * three groups and assigns a weight of 1 to each server:
