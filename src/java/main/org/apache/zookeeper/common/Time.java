@@ -29,7 +29,7 @@ public class Time {
      * all of ZK assumes that time is measured in milliseconds.
      * @return  The time in milliseconds from some arbitrary point in time.
      */
-    public static long currentElapsedTime() {
+    public static long currentElapsedTime() {   //当前已经流逝的时间 不受系统时钟影响
         return System.nanoTime() / 1000000;
     }
 
@@ -39,7 +39,7 @@ public class Time {
      */
     public static long currentWallTime() {
         return System.currentTimeMillis();
-    }
+    }    //受系统时钟影响
 
     /**
      * This is to convert the elapsedTime to a Date.

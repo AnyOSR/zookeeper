@@ -27,10 +27,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class manages the cleanup of snapshots and corresponding transaction
+ * This class manages the cleanup of snapshots and corresponding transaction      管理 snapshots 和 transaction logs
  * logs by scheduling the auto purge task with the specified
- * 'autopurge.purgeInterval'. It keeps the most recent
- * 'autopurge.snapRetainCount' number of snapshots and corresponding transaction
+ * 'autopurge.purgeInterval'. It keeps the most recent                             purgeInterval 任务间隔
+ * 'autopurge.snapRetainCount' number of snapshots and corresponding transaction   snapRetainCount snap的保留数目
  * logs.
  */
 public class DatadirCleanupManager {
@@ -45,15 +45,10 @@ public class DatadirCleanupManager {
     }
 
     private PurgeTaskStatus purgeTaskStatus = PurgeTaskStatus.NOT_STARTED;
-
-    private final File snapDir;
-
-    private final File dataLogDir;
-
-    private final int snapRetainCount;
-
-    private final int purgeInterval;
-
+    private final File snapDir;          // snap存放地址
+    private final File dataLogDir;       // log存放地址
+    private final int snapRetainCount;   // snap保留数目
+    private final int purgeInterval;     // 任务时间间隔
     private Timer timer;
 
     /**
@@ -69,8 +64,7 @@ public class DatadirCleanupManager {
      * @param purgeInterval
      *            purge interval in hours
      */
-    public DatadirCleanupManager(File snapDir, File dataLogDir, int snapRetainCount,
-            int purgeInterval) {
+    public DatadirCleanupManager(File snapDir, File dataLogDir, int snapRetainCount, int purgeInterval) {
         this.snapDir = snapDir;
         this.dataLogDir = dataLogDir;
         this.snapRetainCount = snapRetainCount;

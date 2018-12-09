@@ -18,21 +18,16 @@
 
 package org.apache.zookeeper.jmx;
 
-import java.lang.management.ManagementFactory;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.management.JMException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.management.*;
+import java.lang.management.ManagementFactory;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This class provides a unified interface for registering/unregistering of
@@ -41,15 +36,12 @@ import org.slf4j.LoggerFactory;
  * will be stored in the zookeeper data tree instance as a virtual data tree.
  */
 public class MBeanRegistry {
+
     private static final Logger LOG = LoggerFactory.getLogger(MBeanRegistry.class);
-    
     private static volatile MBeanRegistry instance = new MBeanRegistry();
     
     private final Object LOCK = new Object();
-    
-    private Map<ZKMBeanInfo, String> mapBean2Path =
-        new ConcurrentHashMap<ZKMBeanInfo, String>();
-    
+    private Map<ZKMBeanInfo, String> mapBean2Path = new ConcurrentHashMap<ZKMBeanInfo, String>();
     private MBeanServer mBeanServer;
 
     /**
@@ -90,9 +82,7 @@ public class MBeanRegistry {
      * @param parent if not null, the new bean will be registered as a child
      * node of this parent.
      */
-    public void register(ZKMBeanInfo bean, ZKMBeanInfo parent)
-        throws JMException
-    {
+    public void register(ZKMBeanInfo bean, ZKMBeanInfo parent) throws JMException {
         assert bean != null;
         String path = null;
         if (parent != null) {
@@ -191,8 +181,7 @@ public class MBeanRegistry {
         for (String s: tokens) {
             if (s.length()==0)
                 continue;
-            sb.append("name").append(index++)
-                    .append("=").append(s).append(",");
+            sb.append("name").append(index++).append("=").append(s).append(",");
         }
         return index;
     }
@@ -202,9 +191,7 @@ public class MBeanRegistry {
      * @param bean the MBean instance
      * @return ObjectName to be registered with the platform MBean server
      */
-    protected ObjectName makeObjectName(String path, ZKMBeanInfo bean)
-        throws MalformedObjectNameException
-    {
+    protected ObjectName makeObjectName(String path, ZKMBeanInfo bean) throws MalformedObjectNameException {
         if(path==null)
             return null;
         StringBuilder beanName = new StringBuilder(CommonNames.DOMAIN + ":");
@@ -215,8 +202,7 @@ public class MBeanRegistry {
         try {
             return new ObjectName(beanName.toString());
         } catch (MalformedObjectNameException e) {
-            LOG.warn("Invalid name \"" + beanName.toString() + "\" for class "
-                    + bean.getClass().toString());
+            LOG.warn("Invalid name \"" + beanName.toString() + "\" for class " + bean.getClass().toString());
             throw e;
         }
     }

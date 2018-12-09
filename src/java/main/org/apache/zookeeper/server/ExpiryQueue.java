@@ -18,41 +18,41 @@
 
 package org.apache.zookeeper.server;
 
+import org.apache.zookeeper.common.Time;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.zookeeper.common.Time;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * ExpiryQueue tracks elements in time sorted fixed duration buckets.
+ * ExpiryQueue tracks elements in time sorted fixed duration buckets.               时间排序固定持续时间的bucket？
  * It's used by SessionTrackerImpl to expire sessions and NIOServerCnxnFactory
  * to expire connections.
  */
 public class ExpiryQueue<E> {
-    private final ConcurrentHashMap<E, Long> elemMap =
-        new ConcurrentHashMap<E, Long>();
+    private final ConcurrentHashMap<E, Long> elemMap = new ConcurrentHashMap<E, Long>();
     /**
-     * The maximum number of buckets is equal to max timeout/expirationInterval,
+     * The maximum number of buckets is equal to max timeout/expirationInterval,      最大bucket数目是 超时时间/时间间隔 (总时间/每一段时间)
      * so the expirationInterval should not be too small compared to the
      * max timeout that this expiry queue needs to maintain.
      */
-    private final ConcurrentHashMap<Long, Set<E>> expiryMap =
-        new ConcurrentHashMap<Long, Set<E>>();
-
+    // 过期时刻 --- 过期时刻是key的元素
+    private final ConcurrentHashMap<Long, Set<E>> expiryMap = new ConcurrentHashMap<Long, Set<E>>();    // key 应该是经过映射的
+                                                                                                        // 一个周期内的(expirationInterval)时间段内 映射到同一个点
     private final AtomicLong nextExpirationTime = new AtomicLong();
-    private final int expirationInterval;
+    private final int expirationInterval;     // 每一小段时间间隔区间
 
     public ExpiryQueue(int expirationInterval) {
         this.expirationInterval = expirationInterval;
         nextExpirationTime.set(roundToNextInterval(Time.currentElapsedTime()));
     }
 
+    // 将当前time对齐到expirationInterval，然后加上expirationInterval
+    // 返回一个加上expirationInterval的时刻
     private long roundToNextInterval(long time) {
         return (time / expirationInterval + 1) * expirationInterval;
     }
@@ -66,7 +66,7 @@ public class ExpiryQueue<E> {
     public Long remove(E elem) {
         Long expiryTime = elemMap.remove(elem);
         if (expiryTime != null) {
-            Set<E> set = expiryMap.get(expiryTime);
+            Set<E> set = expiryMap.get(expiryTime);      //对上了
             if (set != null) {
                 set.remove(elem);
                 // We don't need to worry about removing empty sets,
@@ -85,9 +85,9 @@ public class ExpiryQueue<E> {
      *                 changed, or null if unchanged
      */
     public Long update(E elem, int timeout) {
-        Long prevExpiryTime = elemMap.get(elem);
-        long now = Time.currentElapsedTime();
-        Long newExpiryTime = roundToNextInterval(now + timeout);
+        Long prevExpiryTime = elemMap.get(elem);                        // 获得之前的ExpiryTime
+        long now = Time.currentElapsedTime();                           // 当前时刻的流逝时间
+        Long newExpiryTime = roundToNextInterval(now + timeout);   // 计算新的超时时间
 
         if (newExpiryTime.equals(prevExpiryTime)) {
             // No change, so nothing to update
@@ -98,8 +98,7 @@ public class ExpiryQueue<E> {
         Set<E> set = expiryMap.get(newExpiryTime);
         if (set == null) {
             // Construct a ConcurrentHashSet using a ConcurrentHashMap
-            set = Collections.newSetFromMap(
-                new ConcurrentHashMap<E, Boolean>());
+            set = Collections.newSetFromMap(new ConcurrentHashMap<E, Boolean>());
             // Put the new set in the map, but only if another thread
             // hasn't beaten us to it
             Set<E> existingSet = expiryMap.putIfAbsent(newExpiryTime, set);
@@ -107,18 +106,18 @@ public class ExpiryQueue<E> {
                 set = existingSet;
             }
         }
-        set.add(elem);
+        set.add(elem);                                                         // 将当前元素添加到 newExpiryTime对应的set集合中
 
         // Map the elem to the new expiry time. If a different previous
         // mapping was present, clean up the previous expiry bucket.
-        prevExpiryTime = elemMap.put(elem, newExpiryTime);
-        if (prevExpiryTime != null && !newExpiryTime.equals(prevExpiryTime)) {
+        prevExpiryTime = elemMap.put(elem, newExpiryTime);                      // 更新elem的过期时间
+        if (prevExpiryTime != null && !newExpiryTime.equals(prevExpiryTime)) {  // elem之前就存在，且新的过期时间不等于之前的过期时间
             Set<E> prevSet = expiryMap.get(prevExpiryTime);
             if (prevSet != null) {
-                prevSet.remove(elem);
+                prevSet.remove(elem);                                           //将elem从prevExpiryTime对应的set中删除
             }
         }
-        return newExpiryTime;
+        return newExpiryTime;                                                   //返回新的过期时间
     }
 
     /**
@@ -138,18 +137,22 @@ public class ExpiryQueue<E> {
      * @return next set of expired elements, or an empty set if none are
      *         ready
      */
+    //返回过期的数据
+    //存在一个问题，当前方法不能返回全部的已经过期的E
+    //只能返回一个set<E>
+    //外层有一个for循环？
     public Set<E> poll() {
-        long now = Time.currentElapsedTime();
-        long expirationTime = nextExpirationTime.get();
-        if (now < expirationTime) {
+        long now = Time.currentElapsedTime();                  //当前流逝时间
+        long expirationTime = nextExpirationTime.get();        //下次超时时间
+        if (now < expirationTime) {                            //还没有到expirationTime，直接返回
             return Collections.emptySet();
         }
 
+        //当前时间已经过了nextExpirationTime
         Set<E> set = null;
-        long newExpirationTime = expirationTime + expirationInterval;
-        if (nextExpirationTime.compareAndSet(
-              expirationTime, newExpirationTime)) {
-            set = expiryMap.remove(expirationTime);
+        long newExpirationTime = expirationTime + expirationInterval;   //计算下次超时时间 每次在nextExpirationTime的基础上加上expirationInterval
+        if (nextExpirationTime.compareAndSet(expirationTime, newExpirationTime)) {  //如果成功更新
+            set = expiryMap.remove(expirationTime);                                                // 删除掉expirationTime对应的连接数据
         }
         if (set == null) {
             return Collections.emptySet();

@@ -223,11 +223,11 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             this.id = sid;
             String serverClientParts[] = addressStr.split(";");
             String serverParts[] = splitWithLeadingHostname(serverClientParts[0]);
-            if ((serverClientParts.length > 2) || (serverParts.length < 3) || (serverParts.length > 4)) {
+            if ((serverClientParts.length > 2) || (serverParts.length < 3) || (serverParts.length > 4)) {   // 校验配置信息
                 throw new ConfigException(addressStr + wrongFormat);
             }
 
-            if (serverClientParts.length == 2) {
+            if (serverClientParts.length == 2) {   //如果有client配置信息
                 //LOG.warn("ClientParts: " + serverClientParts[1]);
                 String clientParts[] = splitWithLeadingHostname(serverClientParts[1]);
                 if (clientParts.length > 2) {
@@ -246,12 +246,12 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
 
             // server_config should be either host:port:port or host:port:port:type
             try {
-                addr = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[1]));
+                addr = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[1]));           //第一个port？
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[1]);
             }
             try {
-                electionAddr = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[2]));
+                electionAddr = new InetSocketAddress(serverParts[0], Integer.parseInt(serverParts[2]));     //第二个port用于选举
             } catch (NumberFormatException e) {
                 throw new ConfigException("Address unresolved: " + serverParts[0] + ":" + serverParts[2]);
             }

@@ -81,7 +81,7 @@ public class QuorumPeerConfig {
 
     protected int initLimit;
     protected int syncLimit;
-    protected int electionAlg = 3;
+    protected int electionAlg = 3;        //选举算法，默认为3
     protected int electionPort = 2182;
     protected boolean quorumListenOnAllIPs = false;
 
@@ -131,7 +131,6 @@ public class QuorumPeerConfig {
        
         try {
             File configFile = (new VerifyingFileFactory.Builder(LOG).warnForRelativePath().failForNonExistingPath().build()).create(path);
-                
             Properties cfg = new Properties();
             FileInputStream in = new FileInputStream(configFile);
             try {
@@ -140,24 +139,23 @@ public class QuorumPeerConfig {
             } finally {
                 in.close();
             }
-            
             parseProperties(cfg);   //解析配置文件，填充属性值
         } catch (IOException e) {
             throw new ConfigException("Error processing " + path, e);
         } catch (IllegalArgumentException e) {
             throw new ConfigException("Error processing " + path, e);
         }   
-        
-        if (dynamicConfigFileStr!=null) {
+
+
+        if (dynamicConfigFileStr!=null) {            // 动态配置文件？
            try {           
                Properties dynamicCfg = new Properties();
                FileInputStream inConfig = new FileInputStream(dynamicConfigFileStr);
                try {
                    dynamicCfg.load(inConfig);
-                   if (dynamicCfg.getProperty("version") != null) {
+                   if (dynamicCfg.getProperty("version") != null) {        // 动态配置文件里面必须有version配置
                        throw new ConfigException("dynamic file shouldn't have version inside");
                    }
-
                    String version = getVersionFromFilename(dynamicConfigFileStr);
                    // If there isn't any version associated with the filename,
                    // the default version is 0.
@@ -168,12 +166,13 @@ public class QuorumPeerConfig {
                    inConfig.close();
                }
                setupQuorumPeerConfig(dynamicCfg, false);
-
            } catch (IOException e) {
                throw new ConfigException("Error processing " + dynamicConfigFileStr, e);
            } catch (IllegalArgumentException e) {
                throw new ConfigException("Error processing " + dynamicConfigFileStr, e);
-           }        
+           }
+
+
            File nextDynamicConfigFile = new File(configFileStr + nextDynamicConfigFileSuffix);
            if (nextDynamicConfigFile.exists()) {
                try {           
@@ -187,7 +186,7 @@ public class QuorumPeerConfig {
                    boolean isHierarchical = false;
                    for (Entry<Object, Object> entry : dynamicConfigNextCfg.entrySet()) {
                        String key = entry.getKey().toString().trim();  
-                       if (key.startsWith("group") || key.startsWith("weight")) {
+                       if (key.startsWith("group") || key.startsWith("weight")) {           // group  weight 的isHierarchical是true 很明显
                            isHierarchical = true;
                            break;
                        }
@@ -225,6 +224,7 @@ public class QuorumPeerConfig {
      * @throws IOException
      * @throws ConfigException
      */
+    // 解析配置文件
     public void parseProperties(Properties zkProp) throws IOException, ConfigException {
         int clientPort = 0;
         int secureClientPort = 0;
@@ -591,17 +591,16 @@ public class QuorumPeerConfig {
         // 创建QuorumVerifier
         QuorumVerifier qv = createQuorumVerifier(dynamicConfigProp, isHierarchical);
                
-        int numParticipators = qv.getVotingMembers().size();
-        int numObservers = qv.getObservingMembers().size();
+        int numParticipators = qv.getVotingMembers().size();    // 参与投票 的server 数目
+        int numObservers = qv.getObservingMembers().size();     // observe 数目
         if (numParticipators == 0) {
             if (!standaloneEnabled) {
-                throw new IllegalArgumentException("standaloneEnabled = false then " +
-                        "number of participants should be >0");
+                throw new IllegalArgumentException("standaloneEnabled = false then " + "number of participants should be >0");
             }
             if (numObservers > 0) {
                 throw new IllegalArgumentException("Observers w/o participants is an invalid configuration");
             }
-        } else if (numParticipators == 1 && standaloneEnabled) {
+        } else if (numParticipators == 1 && standaloneEnabled) {          // 单机模式
             // HBase currently adds a single server line to the config, for
             // b/w compatibility reasons we need to keep this here. If standaloneEnabled
             // is true, the QuorumPeerMain script will create a standalone server instead
@@ -611,7 +610,7 @@ public class QuorumPeerConfig {
                 throw new IllegalArgumentException("Observers w/o quorum is an invalid configuration");
             }
         } else {
-            if (warnings) {
+            if (warnings) {   //条件满足的话，输出警告信息
                 if (numParticipators <= 2) {
                     LOG.warn("No server failure will be tolerated. " + "You need at least 3 servers.");
                 } else if (numParticipators % 2 == 0) {
@@ -632,6 +631,7 @@ public class QuorumPeerConfig {
         return qv;
     }
 
+    //从配置文件中解析myId
     private void setupMyId() throws IOException {
         File myIdFile = new File(dataDir, "myid");
         // standalone server doesn't need myid file.
@@ -649,38 +649,37 @@ public class QuorumPeerConfig {
             serverId = Long.parseLong(myIdString);
             MDC.put("myid", myIdString);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("serverid " + myIdString
-                    + " is not a number");
+            throw new IllegalArgumentException("serverid " + myIdString + " is not a number");
         }
     }
 
+    //如果配置文件中没有设置clientPort，尝试从server.number中获取clientPort
     private void setupClientPort() throws ConfigException {
         if (serverId == UNSET_SERVERID) {
             return;
         }
         QuorumServer qs = quorumVerifier.getAllMembers().get(serverId);
         if (clientPortAddress != null && qs != null && qs.clientAddr != null) {
-            if ((!clientPortAddress.getAddress().isAnyLocalAddress() && !clientPortAddress.equals(qs.clientAddr)) ||
-                    (clientPortAddress.getAddress().isAnyLocalAddress() && clientPortAddress.getPort() != qs.clientAddr.getPort()))
-                throw new ConfigException("client address for this server (id = " + serverId +
-                        ") in static config file is " + clientPortAddress +
-                        " is different from client address found in dynamic file: " + qs.clientAddr);
+            if ((!clientPortAddress.getAddress().isAnyLocalAddress() && !clientPortAddress.equals(qs.clientAddr)) || (clientPortAddress.getAddress().isAnyLocalAddress() && clientPortAddress.getPort() != qs.clientAddr.getPort()))
+                throw new ConfigException("client address for this server (id = " + serverId + ") in static config file is " + clientPortAddress + " is different from client address found in dynamic file: " + qs.clientAddr);
         }
-        if (qs != null && qs.clientAddr != null) clientPortAddress = qs.clientAddr;
+        if (qs != null && qs.clientAddr != null){
+            clientPortAddress = qs.clientAddr;
+        }
     }
 
+    // 设置 PeerType
     private void setupPeerType() {
         // Warn about inconsistent peer type
         LearnerType roleByServersList = quorumVerifier.getObservingMembers().containsKey(serverId) ? LearnerType.OBSERVER : LearnerType.PARTICIPANT;
         if (roleByServersList != peerType) {
-            LOG.warn("Peer type from servers list (" + roleByServersList
-                    + ") doesn't match peerType (" + peerType
-                    + "). Defaulting to servers list.");
-
+            LOG.warn("Peer type from servers list (" + roleByServersList + ") doesn't match peerType (" + peerType + "). Defaulting to servers list.");
             peerType = roleByServersList;
         }
     }
 
+    // 检查有效性
+    // 如果是分布式，检验 initLimit syncLimit serverId
     public void checkValidity() throws IOException, ConfigException{
         if (isDistributed()) {
             if (initLimit == 0) {
