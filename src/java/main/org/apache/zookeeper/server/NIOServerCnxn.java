@@ -48,31 +48,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * This class handles communication with clients using NIO. There is one per
+ * This class handles communication with clients using NIO. There is one per           和用户交互的类 每个client一个实例？只一个线程交互？
  * client, but only one thread doing the communication.
  */
 public class NIOServerCnxn extends ServerCnxn {
     private static final Logger LOG = LoggerFactory.getLogger(NIOServerCnxn.class);
 
     private final NIOServerCnxnFactory factory;
-
     private final SocketChannel sock;
-
     private final SelectorThread selectorThread;
-
     private final SelectionKey sk;
-
     private boolean initialized;
-
     private final ByteBuffer lenBuffer = ByteBuffer.allocate(4);
-
     private ByteBuffer incomingBuffer = lenBuffer;
-
-    private final Queue<ByteBuffer> outgoingBuffers =
-        new LinkedBlockingQueue<ByteBuffer>();
-
+    private final Queue<ByteBuffer> outgoingBuffers = new LinkedBlockingQueue<ByteBuffer>();
     private int sessionTimeout;
-
     private final ZooKeeperServer zkServer;
 
     /**

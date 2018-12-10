@@ -18,20 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.security.cert.Certificate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.jute.Record;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -41,8 +27,17 @@ import org.apache.zookeeper.proto.RequestHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.security.cert.Certificate;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
- * Interface to a Server connection - represents a connection from a client
+ * Interface to a Server connection - represents a connection from a client    代表 一个client到server的连接
  * to the server.
  */
 public abstract class ServerCnxn implements Stats, Watcher {
@@ -64,8 +59,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
 
     abstract void close();
 
-    public abstract void sendResponse(ReplyHeader h, Record r, String tag)
-        throws IOException;
+    public abstract void sendResponse(ReplyHeader h, Record r, String tag) throws IOException;
 
     /* notify the client the session is closing and close/cleanup socket */
     abstract void sendCloseSession();
@@ -181,9 +175,7 @@ public abstract class ServerCnxn implements Stats, Watcher {
         return packetsSent.incrementAndGet();
     }
 
-    protected synchronized void updateStatsForResponse(long cxid, long zxid,
-            String op, long start, long end)
-    {
+    protected synchronized void updateStatsForResponse(long cxid, long zxid, String op, long start, long end) {
         // don't overwrite with "special" xids - we're interested
         // in the clients last real operation
         if (cxid >= 0) {

@@ -21,18 +21,18 @@ package org.apache.zookeeper;
 import org.apache.yetus.audience.InterfaceAudience;
 
 /**
- * This interface specifies the public interface an event handler class must
- * implement. A ZooKeeper client will get various events from the ZooKeeper
- * server it connects to. An application using such a client handles these
- * events by registering a callback object with the client. The callback object
+ * This interface specifies the public interface an event handler class must        事件处理类 必须实现的
+ * implement. A ZooKeeper client will get various events from the ZooKeeper         zk 客户端会从它连接的server获取到各种事件
+ * server it connects to. An application using such a client handles these          用这个客户端的应用 注册一些回调对象 来处理这些事件
+ * events by registering a callback object with the client. The callback object     这些回调实例 是一个Watcher子类的实例
  * is expected to be an instance of a class that implements Watcher interface.
- * 
+ *                                                                                  事件处理回调类
  */
 @InterfaceAudience.Public
 public interface Watcher {
 
     /**
-     * This interface defines the possible states an Event may represent
+     * This interface defines the possible states an Event may represent    事件可能表示的状态
      */
     @InterfaceAudience.Public
     public interface Event {
@@ -108,14 +108,13 @@ public interface Watcher {
                     case    6: return KeeperState.SaslAuthenticated;
                     case -112: return KeeperState.Expired;
 
-                    default:
-                        throw new RuntimeException("Invalid integer value for conversion to KeeperState");
+                    default: throw new RuntimeException("Invalid integer value for conversion to KeeperState");
                 }
             }
         }
 
         /**
-         * Enumeration of types of events that may occur on the ZooKeeper
+         * Enumeration of types of events that may occur on the ZooKeeper     事件类型
          */
         @InterfaceAudience.Public
         public enum EventType {
@@ -148,15 +147,14 @@ public interface Watcher {
                     case  5: return EventType.DataWatchRemoved;
                     case  6: return EventType.ChildWatchRemoved;
 
-                    default:
-                        throw new RuntimeException("Invalid integer value for conversion to EventType");
+                    default: throw new RuntimeException("Invalid integer value for conversion to EventType");
                 }
             }           
         }
     }
 
     /**
-     * Enumeration of types of watchers
+     * Enumeration of types of watchers   watcher类型
      */
     @InterfaceAudience.Public
     public enum WatcherType {
@@ -175,16 +173,11 @@ public interface Watcher {
 
         public static WatcherType fromInt(int intValue) {
             switch (intValue) {
-            case 1:
-                return WatcherType.Children;
-            case 2:
-                return WatcherType.Data;
-            case 3:
-                return WatcherType.Any;
+            case 1: return WatcherType.Children;
+            case 2: return WatcherType.Data;
+            case 3: return WatcherType.Any;
 
-            default:
-                throw new RuntimeException(
-                        "Invalid integer value for conversion to WatcherType");
+            default: throw new RuntimeException("Invalid integer value for conversion to WatcherType");
             }
         }
     }

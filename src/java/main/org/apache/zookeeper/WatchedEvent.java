@@ -66,16 +66,13 @@ public class WatchedEvent {
 
     @Override
     public String toString() {
-        return "WatchedEvent state:" + keeperState
-            + " type:" + eventType + " path:" + path;
+        return "WatchedEvent state:" + keeperState + " type:" + eventType + " path:" + path;
     }
 
     /**
      *  Convert WatchedEvent to type that can be sent over network
      */
     public WatcherEvent getWrapper() {
-        return new WatcherEvent(eventType.getIntValue(), 
-                                keeperState.getIntValue(), 
-                                path);
+        return new WatcherEvent(eventType.getIntValue(), keeperState.getIntValue(), path);
     }
 }

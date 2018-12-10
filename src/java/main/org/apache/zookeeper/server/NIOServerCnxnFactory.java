@@ -48,8 +48,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  *         performance bottleneck.
  *   - 0-M socket I/O worker threads, which perform basic socket reads and           0-M个IO worker线程，如果是0，selector线程直接进行socket IO操作
  *         writes. If configured with 0 worker threads, the selector threads
- *         do the socket I/O directly.                                               1 连接expiration线程，关闭掉空闲连接
- *   - 1   connection expiration thread, which closes idle connections; this is
+ *         do the socket I/O directly.
+ *   - 1   connection expiration thread, which closes idle connections; this is       1 连接expiration线程，关闭掉空闲连接
  *         necessary to expire connections on which no session is established.
  *
  * Typical (default) thread counts are: on a 32 core machine, 1 accept thread,        推荐配置
@@ -63,7 +63,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     /**
      * With 500 connections to an observer with watchers firing on each, is      一个observer上500个连接，并且有watch触发，一个selector不能超过 1GigE速率
      * unable to exceed 1GigE rates with only 1 selector.
-     * Defaults to using 2 selector threads with 8 cores and 4 with 32 cores.      根号下(核心数/2)
+     * Defaults to using 2 selector threads with 8 cores and 4 with 32 cores.    selector线程数目  根号下(核心数/2)
      * Expressed as sqrt(numCores/2). Must have at least 1 selector thread.
      */
     public static final String ZOOKEEPER_NIO_NUM_SELECTOR_THREADS = "zookeeper.nio.numSelectorThreads";
@@ -295,22 +295,22 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     /**
-     * The SelectorThread receives newly accepted connections from the
+     * The SelectorThread receives newly accepted connections from the             接受 从accept线程分发的已接受连接
      * AcceptThread and is responsible for selecting for I/O readiness
-     * across the connections. This thread is the only thread that performs
+     * across the connections. This thread is the only thread that performs       是唯一一个可能阻塞或者线程不安全的线程(注册 读写 select)
      * any non-threadsafe or potentially blocking calls on the selector
      * (registering new connections and reading/writing interest ops).
      *
-     * Assignment of a connection to a SelectorThread is permanent and only
-     * one SelectorThread will ever interact with the connection. There are
+     * Assignment of a connection to a SelectorThread is permanent and only         把一个连接分配给某个selector的动作是永久的
+     * one SelectorThread will ever interact with the connection. There are         一个连接只会和一个线程交互
      * 1-N SelectorThreads, with connections evenly apportioned between the
      * SelectorThreads.
      *
-     * If there is a worker thread pool, when a connection has I/O to perform
-     * the SelectorThread removes it from selection by clearing its interest
-     * ops and schedules the I/O for processing by a worker thread. When the
-     * work is complete, the connection is placed on the ready queue to have
-     * its interest ops restored and resume selection.
+     * If there is a worker thread pool, when a connection has I/O to perform       如果有worker线程池
+     * the SelectorThread removes it from selection by clearing its interest        当有连接需要进行IO操作时，selector线程会清除掉它的interest ops(就不会再select了)
+     * ops and schedules the I/O for processing by a worker thread. When the        并将IO操作交由worker处理
+     * work is complete, the connection is placed on the ready queue to have        当worker线程完成IO操作时，连接会被放置在ready queue上
+     * its interest ops restored and resume selection.                              且恢复其interest ops，继续select
      *
      * If there is no worker thread pool, the SelectorThread performs the I/O
      * directly.
@@ -618,37 +618,27 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
         configureSaslLogin();
 
         maxClientCnxns = maxcc;
-        sessionlessCnxnTimeout = Integer.getInteger(
-            ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);
+        sessionlessCnxnTimeout = Integer.getInteger(ZOOKEEPER_NIO_SESSIONLESS_CNXN_TIMEOUT, 10000);   //session 超时时间
         // We also use the sessionlessCnxnTimeout as expiring interval for
         // cnxnExpiryQueue. These don't need to be the same, but the expiring
         // interval passed into the ExpiryQueue() constructor below should be
         // less than or equal to the timeout.
-        cnxnExpiryQueue =
-            new ExpiryQueue<NIOServerCnxn>(sessionlessCnxnTimeout);
+        cnxnExpiryQueue = new ExpiryQueue<NIOServerCnxn>(sessionlessCnxnTimeout);
         expirerThread = new ConnectionExpirerThread();
 
         int numCores = Runtime.getRuntime().availableProcessors();
         // 32 cores sweet spot seems to be 4 selector threads
-        numSelectorThreads = Integer.getInteger(
-            ZOOKEEPER_NIO_NUM_SELECTOR_THREADS,
-            Math.max((int) Math.sqrt((float) numCores/2), 1));
+        numSelectorThreads = Integer.getInteger(ZOOKEEPER_NIO_NUM_SELECTOR_THREADS, Math.max((int) Math.sqrt((float) numCores/2), 1));   // selector线程数目
         if (numSelectorThreads < 1) {
             throw new IOException("numSelectorThreads must be at least 1");
         }
 
-        numWorkerThreads = Integer.getInteger(
-            ZOOKEEPER_NIO_NUM_WORKER_THREADS, 2 * numCores);
-        workerShutdownTimeoutMS = Long.getLong(
-            ZOOKEEPER_NIO_SHUTDOWN_TIMEOUT, 5000);
+        numWorkerThreads = Integer.getInteger(ZOOKEEPER_NIO_NUM_WORKER_THREADS, 2 * numCores);                          // worker线程 数目
+        workerShutdownTimeoutMS = Long.getLong(ZOOKEEPER_NIO_SHUTDOWN_TIMEOUT, 5000);
 
-        LOG.info("Configuring NIO connection handler with "
-                 + (sessionlessCnxnTimeout/1000) + "s sessionless connection"
-                 + " timeout, " + numSelectorThreads + " selector thread(s), "
-                 + (numWorkerThreads > 0 ? numWorkerThreads : "no")
-                 + " worker threads, and "
-                 + (directBufferBytes == 0 ? "gathered writes." :
-                    ("" + (directBufferBytes/1024) + " kB direct buffers.")));
+        LOG.info("Configuring NIO connection handler with " + (sessionlessCnxnTimeout/1000) + "s sessionless connection"
+                 + " timeout, " + numSelectorThreads + " selector thread(s), " + (numWorkerThreads > 0 ? numWorkerThreads : "no")
+                 + " worker threads, and " + (directBufferBytes == 0 ? "gathered writes." : ("" + (directBufferBytes/1024) + " kB direct buffers.")));
         for(int i=0; i<numSelectorThreads; ++i) {
             selectorThreads.add(new SelectorThread(i));
         }
@@ -709,8 +699,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     public void start() {
         stopped = false;
         if (workerPool == null) {
-            workerPool = new WorkerService(
-                "NIOWorker", numWorkerThreads, false);
+            workerPool = new WorkerService("NIOWorker", numWorkerThreads, false);
         }
         for(SelectorThread thread : selectorThreads) {
             if (thread.getState() == Thread.State.NEW) {
@@ -727,8 +716,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
     }
 
     @Override
-    public void startup(ZooKeeperServer zks, boolean startServer)
-            throws IOException, InterruptedException {
+    public void startup(ZooKeeperServer zks, boolean startServer) throws IOException, InterruptedException {
         start();
         setZooKeeperServer(zks);
         if (startServer) {
