@@ -141,6 +141,9 @@ public class QuorumPeerMain {
           if (config.getClientPortAddress() != null) {
               cnxnFactory = ServerCnxnFactory.createFactory();
               cnxnFactory.configure(config.getClientPortAddress(), config.getMaxClientCnxns(), false);
+              // 假如cnxnFactory是NIOServerCnxnFactory，由于第一个参数是ClientPortAddress
+              // 则NIOServerCnxnFactory的accept线程 listen的端口是客户端端口
+              // NIOServerCnxnFactory是一个只与客户端交互的类，和选举无关，目前来看
           }
 
           if (config.getSecureClientPortAddress() != null) {

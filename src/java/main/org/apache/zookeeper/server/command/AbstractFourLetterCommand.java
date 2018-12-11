@@ -18,14 +18,14 @@
 
 package org.apache.zookeeper.server.command;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-
 import org.apache.zookeeper.server.ServerCnxn;
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * Set of threads for command ports. All the 4 letter commands are run via a
@@ -33,9 +33,8 @@ import org.slf4j.LoggerFactory;
  * the abstract class from which all the others inherit.
  */
 public abstract class AbstractFourLetterCommand {
-    private static final Logger LOG = LoggerFactory
-        .getLogger(AbstractFourLetterCommand.class);
 
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractFourLetterCommand.class);
     public static final String ZK_NOT_SERVING = "This ZooKeeper instance is not currently serving requests";
 
     protected PrintWriter pw;

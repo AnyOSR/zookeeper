@@ -473,7 +473,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                     cleanupSelectionKey(key);
                 }
                 NIOServerCnxn cnxn = (NIOServerCnxn) key.attachment();
-                if (cnxn.isSelectable()) {
+                if (cnxn.isSelectable()) {                               // 重新设置 InterestOps
                     key.interestOps(cnxn.getInterestOps());
                 }
             }
@@ -521,7 +521,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
             // Push an update request on the queue to resume selecting
             // on the current set of interest ops, which may have changed
             // as a result of the I/O operations we just performed.
-            if (!selectorThread.addInterestOpsUpdateRequest(key)) {
+            if (!selectorThread.addInterestOpsUpdateRequest(key)) {   // io操作已经完成，放入updateQueue，准备继续select
                 cnxn.close();
             }
         }
@@ -821,8 +821,7 @@ public class NIOServerCnxnFactory extends ServerCnxnFactory {
                 // This will remove the cnxn from cnxns
                 cnxn.close();
             } catch (Exception e) {
-                LOG.warn("Ignoring exception closing cnxn sessionid 0x"
-                         + Long.toHexString(cnxn.getSessionId()), e);
+                LOG.warn("Ignoring exception closing cnxn sessionid 0x" + Long.toHexString(cnxn.getSessionId()), e);
             }
         }
     }

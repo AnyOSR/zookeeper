@@ -29,126 +29,109 @@ import java.util.Set;
 import java.util.Arrays;
 
 /**
- * This class contains constants for all the four letter commands
+ * This class contains constants for all the four letter commands    四个字母的commands
  */
 public class FourLetterCommands {
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int confCmd =
-        ByteBuffer.wrap("conf".getBytes()).getInt();
+    public final static int confCmd = ByteBuffer.wrap("conf".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int consCmd =
-        ByteBuffer.wrap("cons".getBytes()).getInt();
+    public final static int consCmd = ByteBuffer.wrap("cons".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int crstCmd =
-        ByteBuffer.wrap("crst".getBytes()).getInt();
+    public final static int crstCmd = ByteBuffer.wrap("crst".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int dirsCmd =
-        ByteBuffer.wrap("dirs".getBytes()).getInt();
+    public final static int dirsCmd = ByteBuffer.wrap("dirs".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int dumpCmd =
-        ByteBuffer.wrap("dump".getBytes()).getInt();
+    public final static int dumpCmd = ByteBuffer.wrap("dump".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int enviCmd =
-        ByteBuffer.wrap("envi".getBytes()).getInt();
+    public final static int enviCmd = ByteBuffer.wrap("envi".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int getTraceMaskCmd =
-        ByteBuffer.wrap("gtmk".getBytes()).getInt();
+    public final static int getTraceMaskCmd = ByteBuffer.wrap("gtmk".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int ruokCmd =
-        ByteBuffer.wrap("ruok".getBytes()).getInt();
+    public final static int ruokCmd = ByteBuffer.wrap("ruok".getBytes()).getInt();
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int setTraceMaskCmd =
-        ByteBuffer.wrap("stmk".getBytes()).getInt();
+    public final static int setTraceMaskCmd = ByteBuffer.wrap("stmk".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int srvrCmd =
-        ByteBuffer.wrap("srvr".getBytes()).getInt();
+    public final static int srvrCmd = ByteBuffer.wrap("srvr".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int srstCmd =
-        ByteBuffer.wrap("srst".getBytes()).getInt();
+    public final static int srstCmd = ByteBuffer.wrap("srst".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int statCmd =
-        ByteBuffer.wrap("stat".getBytes()).getInt();
+    public final static int statCmd = ByteBuffer.wrap("stat".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int wchcCmd =
-        ByteBuffer.wrap("wchc".getBytes()).getInt();
+    public final static int wchcCmd = ByteBuffer.wrap("wchc".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int wchpCmd =
-        ByteBuffer.wrap("wchp".getBytes()).getInt();
+    public final static int wchpCmd = ByteBuffer.wrap("wchp".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int wchsCmd =
-        ByteBuffer.wrap("wchs".getBytes()).getInt();
+    public final static int wchsCmd = ByteBuffer.wrap("wchs".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int mntrCmd = ByteBuffer.wrap("mntr".getBytes())
-            .getInt();
+    public final static int mntrCmd = ByteBuffer.wrap("mntr".getBytes()).getInt();
 
     /*
      * See <a href="{@docRoot}/../../../docs/zookeeperAdmin.html#sc_zkCommands">
      * Zk Admin</a>. this link is for all the commands.
      */
-    public final static int isroCmd = ByteBuffer.wrap("isro".getBytes())
-            .getInt();
+    public final static int isroCmd = ByteBuffer.wrap("isro".getBytes()).getInt();
 
     /*
      * The control sequence sent by the telnet program when it closes a
@@ -159,12 +142,10 @@ public class FourLetterCommands {
     public final static int telnetCloseCmd = 0xfff4fffd;
 
     private static final String ZOOKEEPER_4LW_COMMANDS_WHITELIST = "zookeeper.4lw.commands.whitelist";
-
     private static final Logger LOG = LoggerFactory.getLogger(FourLetterCommands.class);
 
-    private static final Map<Integer, String> cmd2String = new HashMap<Integer, String>();
-
-    private static final Set<String> whiteListedCommands = new HashSet<String>();
+    private static final Map<Integer, String> cmd2String = new HashMap<Integer, String>();    // map integer to string command
+    private static final Set<String> whiteListedCommands = new HashSet<String>();             // 白名单命令行
 
     private static boolean whiteListInitialized = false;
 
@@ -203,7 +184,7 @@ public class FourLetterCommands {
      * @return true if the specified command is enabled
      */
     public synchronized static boolean isEnabled(String command) {
-        if (whiteListInitialized) {
+        if (whiteListInitialized) {                         // 如果已经初始化了
             return whiteListedCommands.contains(command);
         }
 
