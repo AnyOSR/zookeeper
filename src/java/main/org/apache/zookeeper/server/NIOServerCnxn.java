@@ -144,22 +144,22 @@ public class NIOServerCnxn extends ServerCnxn {
 
     /** Read the request payload (everything following the length prefix) */
     private void readPayload() throws IOException, InterruptedException {
-        if (incomingBuffer.remaining() != 0) { // have we read length bytes?
+        if (incomingBuffer.remaining() != 0) { // have we read length bytes?  未读满
             int rc = sock.read(incomingBuffer); // sock is non-blocking, so ok
             if (rc < 0) {
                 throw new EndOfStreamException("Unable to read additional data from client sessionid 0x" + Long.toHexString(sessionId) + ", likely client has closed socket");
             }
         }
 
-        if (incomingBuffer.remaining() == 0) { // have we read length bytes?
+        if (incomingBuffer.remaining() == 0) { // have we read length bytes?   已读完len字节
             packetReceived();
             incomingBuffer.flip();
-            if (!initialized) {
+            if (!initialized) {                  //如果还没有初始化，是连接请求  连接不是accept线程就已经链接了吗？
                 readConnectRequest();
-            } else {
+            } else {                             //读取请求
                 readRequest();
             }
-            lenBuffer.clear();
+            lenBuffer.clear();                  //果然，清空lenBuffer，然后incomingBuffer指向lenBuffer
             incomingBuffer = lenBuffer;
         }
     }
@@ -191,7 +191,7 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     void handleWrite(SelectionKey k) throws IOException, CloseRequestException {
-        if (outgoingBuffers.isEmpty()) {
+        if (outgoingBuffers.isEmpty()) {      // 如果为空，直接返回，那数据是先写到outgoingBuffers？
             return;
         }
 
@@ -214,23 +214,26 @@ public class NIOServerCnxn extends ServerCnxn {
                 if (bb == ServerCnxnFactory.closeConn) {
                     throw new CloseRequestException("close requested");
                 }
-                if (bb.remaining() > 0) {
+                if (bb.remaining() > 0) {      //检查当前数据是否发送完成，没发送完，break
                     break;
                 }
+
+                // bb已发送完成
                 packetSent();
-                outgoingBuffers.remove();
+                outgoingBuffers.remove();    //移除掉已经发送完的
             }
          } else {
             directBuffer.clear();
 
+            //先将足够多的 outgoingBuffers里面的数据复制到directBuffer
             for (ByteBuffer b : outgoingBuffers) {
-                if (directBuffer.remaining() < b.remaining()) {
+                if (directBuffer.remaining() < b.remaining()) {     //如果directBuffer容纳不下b里面的可读数据
                     /*
                      * When we call put later, if the directBuffer is to
                      * small to hold everything, nothing will be copied,
                      * so we've got to slice the buffer if it's too big.
                      */
-                    b = (ByteBuffer) b.slice().limit(directBuffer.remaining());
+                    b = (ByteBuffer) b.slice().limit(directBuffer.remaining());  //slice一个新的buffer，并将新slice buffer的limit设置为directBuffer.remaining()
                 }
                 /*
                  * put() is going to modify the positions of both
@@ -239,10 +242,10 @@ public class NIOServerCnxn extends ServerCnxn {
                  * needed), so we save and reset the position after the
                  * copy
                  */
-                int p = b.position();
+                int p = b.position(); //将之前的position记录下来
                 directBuffer.put(b);
-                b.position(p);
-                if (directBuffer.remaining() == 0) {
+                b.position(p);        //恢复position
+                if (directBuffer.remaining() == 0) {  //directBuffer写满了
                     break;
                 }
             }
@@ -252,27 +255,28 @@ public class NIOServerCnxn extends ServerCnxn {
              */
             directBuffer.flip();
 
-            int sent = sock.write(directBuffer);
+            int sent = sock.write(directBuffer);  //发送directBuffer里面的数据
 
             ByteBuffer bb;
 
             // Remove the buffers that we have sent
+            // 移除掉已经发送的数据
             while ((bb = outgoingBuffers.peek()) != null) {
                 if (bb == ServerCnxnFactory.closeConn) {
                     throw new CloseRequestException("close requested");
                 }
-                if (sent < bb.remaining()) {
+                if (sent < bb.remaining()) {      //如果发送的字节数目 小于 bb的可写字节数
                     /*
                      * We only partially sent this buffer, so we update
                      * the position and exit the loop.
                      */
-                    bb.position(bb.position() + sent);
-                    break;
+                    bb.position(bb.position() + sent);      //则设置 bb的position
+                    break;                                  //只有实际发送了之后才会设定position，这是对的
                 }
                 packetSent();
                 /* We've sent the whole buffer, so drop the buffer */
-                sent -= bb.remaining();
-                outgoingBuffers.remove();
+                sent -= bb.remaining();                     // 减去已发送字节
+                outgoingBuffers.remove();                   // 移除已发送buffer
             }
         }
     }
@@ -299,16 +303,16 @@ public class NIOServerCnxn extends ServerCnxn {
                     throw new EndOfStreamException("Unable to read additional data from client sessionid 0x" + Long.toHexString(sessionId) + ", likely client has closed socket");
                 }
                 if (incomingBuffer.remaining() == 0) {   // incomingBuffer读满了
-                    boolean isPayload;
-                    if (incomingBuffer == lenBuffer) { // start of next request  刚开始创建NIOServerCnxn时，incomingBuffer和lenBuffer指向同一个对象
+                    boolean isPayload;                   // 读到的字节是否真的是长度信息
+                    if (incomingBuffer == lenBuffer) {   // start of next request  刚开始创建NIOServerCnxn时，incomingBuffer和lenBuffer指向同一个对象
                         incomingBuffer.flip();                                  // 读完一个完成的请求后，incomingBuffer应该会再次指向lenBuffer？
                         isPayload = readLength(k);                              // incomingBuffer == lenBuffer时才去调用 readLength
                         incomingBuffer.clear();                                 // 清空incomingBuffer
                     } else {                   //如果不同的话，说明不是一个新请求
-                        // continuation
+                        // continuation        //继续读取？command没有参数的嘛？
                         isPayload = true;
                     }
-                    if (isPayload) { // not the case for 4letterword
+                    if (isPayload) { // not the case for 4letterword   如果不是command
                         readPayload();
                     }
                     else {
@@ -397,6 +401,7 @@ public class NIOServerCnxn extends ServerCnxn {
         }
     }
 
+    //除了accept连接之外，每次客户端首次连接都会发送一个特定的包？所谓的connectRequest？但是其实和accept的概念不是一个？
     private void readConnectRequest() throws IOException, InterruptedException {
         if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
@@ -464,7 +469,7 @@ public class NIOServerCnxn extends ServerCnxn {
         /** cancel the selection key to remove the socket handling
          * from selector. This is to prevent netcat problem wherein
          * netcat immediately closes the sending side after sending the
-         * commands and still keeps the receiving channel open.
+         * commands and still keeps the receiving channel open.             netcat发送完数据后会立即关闭掉发送端，只开接收端，保持一个半连接
          * The idea is to remove the selectionkey from the selector
          * so that the selector does not notice the closed read on the
          * socket channel and keep the socket alive to write the data to
@@ -515,6 +520,7 @@ public class NIOServerCnxn extends ServerCnxn {
      * @return true if length read, otw false (wasn't really the length)
      * @throws IOException if buffer size exceeds maxBuffer size
      */
+    // 返回 读到的是不是真的是长度信息
     private boolean readLength(SelectionKey k) throws IOException {
         // Read the length, now get the buffer
         int len = lenBuffer.getInt();
@@ -527,7 +533,7 @@ public class NIOServerCnxn extends ServerCnxn {
         if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
         }
-        incomingBuffer = ByteBuffer.allocate(len);
+        incomingBuffer = ByteBuffer.allocate(len);   // 如果不是 string world，则分配一个len长度的buffer
         return true;
     }
 
