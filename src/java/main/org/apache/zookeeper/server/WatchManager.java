@@ -41,7 +41,7 @@ class WatchManager {
 
     // path set<watcher> 一个path可以被多个watcher监控
     private final HashMap<String, HashSet<Watcher>> watchTable = new HashMap<String, HashSet<Watcher>>();        // path 到 watch
-    //一个watcher可以监控多个path
+    //一个watcher可以监控多个path 还是一类watcher？
     private final HashMap<Watcher, HashSet<String>> watch2Paths = new HashMap<Watcher, HashSet<String>>();       // watch 到 path
 
     synchronized int size(){

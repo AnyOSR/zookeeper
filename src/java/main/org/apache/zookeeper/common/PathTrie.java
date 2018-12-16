@@ -18,15 +18,15 @@
 
 package org.apache.zookeeper.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
- * a class that implements prefix matching for 
+ * a class that implements prefix matching for       前缀匹配
  * components of a filesystem path. the trie
  * looks like a tree with edges mapping to 
  * the component of a path.
@@ -39,7 +39,9 @@ import org.slf4j.LoggerFactory;
  *      (bc)
  *   cf/
  *   (cf)
- */    
+ */
+// 虚拟path 真实path
+// a/b/c a和b可能不存在，不需要存在，c是真实add过且记录过的
 public class PathTrie {
     /**
      * the logger for this class
@@ -49,12 +51,12 @@ public class PathTrie {
     /**
      * the root node of PathTrie
      */
-    private final TrieNode rootNode ;
+    private final TrieNode rootNode ;               //根节点
     
     static class TrieNode {
-        boolean property = false;
-        final HashMap<String, TrieNode> children;
-        TrieNode parent = null;
+        boolean property = false;                   // 表示该节点是 “实际存在的”？
+        final HashMap<String, TrieNode> children;   // 孩子节点
+        TrieNode parent = null;                     // parent节点
         /**
          * create a trienode with parent
          * as parameter
@@ -124,14 +126,13 @@ public class PathTrie {
                 }
                 TrieNode childNode = children.get(childName);
                 // this is the only child node.
-                if (childNode.getChildren().length == 1) { 
-                    childNode.setParent(null);
+                if (childNode.getChildren().length == 1) {    // 当前节点的孩子节点只有一个孩子
+                    childNode.setParent(null);                // 移除掉childName对应的孩子节点
                     children.remove(childName);
-                }
-                else {
+                } else {
                     // their are more child nodes
                     // so just reset property.
-                    childNode.setProperty(false);
+                    childNode.setProperty(false);             //如果childNode有多个孩子，则将其property设置为false
                 }
             }
         }
@@ -146,8 +147,7 @@ public class PathTrie {
             synchronized(children) {
                if (!children.containsKey(childName)) {
                    return null;
-               }
-               else {
+               } else {
                    return children.get(childName);
                }
             }
@@ -193,7 +193,7 @@ public class PathTrie {
      * add a path to the path trie 
      * @param path
      */
-    public void addPath(String path) {
+    public void addPath(String path) {      // 最前面是否有/对结果无影响
         if (path == null) {
             return;
         }
@@ -222,7 +222,7 @@ public class PathTrie {
             return;
         }
         String[] pathComponents = path.split("/");
-        TrieNode parent = rootNode;
+        TrieNode parent = rootNode;                          // 从根节点遍历
         String part = null;
         if (pathComponents.length <= 1) { 
             throw new IllegalArgumentException("Invalid path " + path);
@@ -245,6 +245,7 @@ public class PathTrie {
      * @param path the input path
      * @return the largest prefix for the input path.
      */
+    // 返回path中还没有被delete的最长path
     public String findMaxPrefix(String path) {
         if (path == null) {
             return null;
@@ -253,7 +254,7 @@ public class PathTrie {
             return path;
         }
         String[] pathComponents = path.split("/");
-        TrieNode parent = rootNode;
+        TrieNode parent = rootNode;                          //从根节点遍历
         List<String> components = new ArrayList<String>();
         if (pathComponents.length <= 1) {
             throw new IllegalArgumentException("Invalid path " + path);
@@ -265,9 +266,9 @@ public class PathTrie {
         while((i < pathComponents.length)) {
             if (parent.getChild(pathComponents[i]) != null) {
                 part = pathComponents[i];
-                parent = parent.getChild(part);
-                components.add(part);
-                if (parent.getProperty()) {
+                parent = parent.getChild(part);     // 下一个parent
+                components.add(part);               // 将当前part 加入到components
+                if (parent.getProperty()) {         // 如果下一个parent的property为true，说明没有删除过parent的孩子节点？
                     lastindex = i-1;
                 }
             }

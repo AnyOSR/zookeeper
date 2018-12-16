@@ -18,16 +18,16 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Collections;
-
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.data.Stat;
 import org.apache.zookeeper.data.StatPersisted;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class contains the data for a node in the data tree.
@@ -140,6 +140,7 @@ public class DataNode implements Record {
         return data.length;
     }
 
+    //复制状态
     synchronized public void copyStat(Stat to) {
         to.setAversion(stat.getAversion());
         to.setCtime(stat.getCtime());
@@ -169,8 +170,7 @@ public class DataNode implements Record {
         return stat.getEphemeralOwner();
     }
 
-    synchronized public void deserialize(InputArchive archive, String tag)
-            throws IOException {
+    synchronized public void deserialize(InputArchive archive, String tag) throws IOException {
         archive.startRecord("node");
         data = archive.readBuffer("data");
         acl = archive.readLong("acl");
@@ -179,8 +179,7 @@ public class DataNode implements Record {
         archive.endRecord("node");
     }
 
-    synchronized public void serialize(OutputArchive archive, String tag)
-            throws IOException {
+    synchronized public void serialize(OutputArchive archive, String tag) throws IOException {
         archive.startRecord(this, "node");
         archive.writeBuffer(data, "data");
         archive.writeLong(acl, "acl");

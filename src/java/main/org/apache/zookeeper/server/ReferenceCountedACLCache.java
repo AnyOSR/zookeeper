@@ -38,14 +38,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ReferenceCountedACLCache {
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceCountedACLCache.class);
 
-    final Map<Long, List<ACL>> longKeyMap =
-            new HashMap<Long, List<ACL>>();
-
-    final Map<List<ACL>, Long> aclKeyMap =
-            new HashMap<List<ACL>, Long>();
-
-    final Map<Long, AtomicLongWithEquals> referenceCounter =
-            new HashMap<Long, AtomicLongWithEquals>();
+    final Map<Long, List<ACL>> longKeyMap = new HashMap<Long, List<ACL>>();                                             // 创建时index   List<ACL>
+    final Map<List<ACL>, Long> aclKeyMap = new HashMap<List<ACL>, Long>();                                              // List<ACL>    创建时index
+    final Map<Long, AtomicLongWithEquals> referenceCounter = new HashMap<Long, AtomicLongWithEquals>();   // 计数器  创建时index count
     private static final long OPEN_UNSAFE_ACL_ID = -1L;
 
     /**
@@ -66,14 +61,14 @@ public class ReferenceCountedACLCache {
         // get the value from the map
         Long ret = aclKeyMap.get(acls);
         if (ret == null) {
-            ret = incrementIndex();
+            ret = incrementIndex();         //创建index
             longKeyMap.put(ret, acls);
             aclKeyMap.put(acls, ret);
         }
 
-        addUsage(ret);
+        addUsage(ret);                   //将index对应的count+1
 
-        return ret;
+        return ret;                     // 返回index
     }
 
     /**
@@ -149,12 +144,13 @@ public class ReferenceCountedACLCache {
         referenceCounter.clear();
     }
 
+    //增加index 对应的count数
     public synchronized void addUsage(Long acl) {
         if (acl == OPEN_UNSAFE_ACL_ID) {
             return;
         }
 
-        if (!longKeyMap.containsKey(acl)) {
+        if (!longKeyMap.containsKey(acl)) {      //如果index在longKeyMap中不存在
             LOG.info("Ignoring acl " + acl + " as it does not exist in the cache");
             return;
         }
@@ -167,6 +163,7 @@ public class ReferenceCountedACLCache {
         }
     }
 
+    //减小index 对应的count数
     public synchronized void removeUsage(Long acl) {
         if (acl == OPEN_UNSAFE_ACL_ID) {
             return;
@@ -185,6 +182,7 @@ public class ReferenceCountedACLCache {
         }
     }
 
+    //清除掉count小于等于0的acl
     public synchronized void purgeUnused() {
         Iterator<Map.Entry<Long, AtomicLongWithEquals>> refCountIter = referenceCounter.entrySet().iterator();
         while (refCountIter.hasNext()) {
@@ -198,6 +196,7 @@ public class ReferenceCountedACLCache {
         }
     }
 
+    //重写了hashcode()和equal()方法
     private static class AtomicLongWithEquals extends AtomicLong {
 
         private static final long serialVersionUID = 3355155896813725462L;

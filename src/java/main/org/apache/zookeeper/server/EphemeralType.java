@@ -26,31 +26,31 @@ import java.util.Map;
 
 /**
  * <p>
- * Abstraction that interprets the <code>ephemeralOwner</code> field of a ZNode. Originally,
- * the ephemeralOwner noted that a ZNode is ephemeral and which session created the node.
- * Through an optional system property (<code>zookeeper.extendedTypesEnabled</code>) "extended"
- * features such as TTL Nodes can be enabled. Special bits of the ephemeralOwner are used to
+ * Abstraction that interprets the <code>ephemeralOwner</code> field of a ZNode. Originally,         ZNode.ephemeralOwner的抽象
+ * the ephemeralOwner noted that a ZNode is ephemeral and which session created the node.            ephemeralOwner表示了该ZNode是一个非永久的，以及哪一个session创造了该节点
+ * Through an optional system property (<code>zookeeper.extendedTypesEnabled</code>) "extended"      zookeeper.extendedTypesEnabled  扩展属性
+ * features such as TTL Nodes can be enabled. Special bits of the ephemeralOwner are used to         一些位用来表示哪种feature是enabled，剩下的位是feature specific
  * denote which feature is enabled and the remaining bits of the ephemeralOwner are feature
  * specific.
  * </p>
  * <p>
  * <p>
- * When the system property <code>zookeeper.extendedTypesEnabled</code> is true, extended types
- * are enabled. An extended ephemeralOwner is defined as an ephemeralOwner whose high 8 bits are
- * set (<code>0xff00000000000000L</code>). The two bytes that follow the high 8 bits are
- * used to denote which extended feature the ephemeralOwner represents. The remaining 5 bytes are
+ * When the system property <code>zookeeper.extendedTypesEnabled</code> is true, extended types      zookeeper.extendedTypesEnabled为true时，扩展类型可用
+ * are enabled. An extended ephemeralOwner is defined as an ephemeralOwner whose high 8 bits are     扩展的ephemeralOwner被定义为：一个ephemeralOwner，
+ * set (<code>0xff00000000000000L</code>). The two bytes that follow the high 8 bits are             其高八位是 ff，接下来的两个字节  扩展属性类型
+ * used to denote which extended feature the ephemeralOwner represents. The remaining 5 bytes are    剩下的五个字节是：
  * used by the feature for whatever purpose is needed
  * </p>
  * <p>
  * <p>
- * Currently, the only extended feature is TTL Nodes. It is denoted by the extended feature value of 0.
- * i.e. for TTL Nodes, the ephemeralOwner has the high byte set to 0xff and the next 2 bytes are 0 followed
+ * Currently, the only extended feature is TTL Nodes. It is denoted by the extended feature value of 0.               TTL
+ * i.e. for TTL Nodes, the ephemeralOwner has the high byte set to 0xff and the next 2 bytes are 0 followed           ff  0  TTL(milliseconds)
  * by 5 bytes that represent the TTL value in milliseconds. So, an ephemeralOwner with a TTL value of 1
  * millisecond is: <code>0xff00000000000001</code>.
  * </p>
  * <p>
  * <p>
- * To add new extended features: a) Add a new name to the enum, b) define a constant EXTENDED_BIT_XXXX that's next
+ * To add new extended features: a) Add a new name to the enum, b) define a constant EXTENDED_BIT_XXXX that's next       为了增加一个新的扩展属性
  * in line (after TTLs, that would be <code>0x0001</code>), c) add a mapping to the extendedFeatureMap via the static
  * initializer
  * </p>
@@ -133,6 +133,8 @@ public enum EphemeralType {
     private static final long RESERVED_BITS_MASK = 0x00ffff0000000000L;
     private static final long RESERVED_BITS_SHIFT = 40;
 
+    //  ephemeralOwner和EphemeralType之间有个映射
+    //  StatPersisted.ephemeralOwner  Stat.ephemeralOwner
     private static final Map<Long, EphemeralType> extendedFeatureMap;
 
     static {
@@ -141,6 +143,7 @@ public enum EphemeralType {
         extendedFeatureMap = Collections.unmodifiableMap(map);
     }
 
+    // 前三个字节全为0，后五个字节全为1 扩展属性value Mask
     private static final long EXTENDED_FEATURE_VALUE_MASK = ~(EXTENDED_MASK | RESERVED_BITS_MASK);
 
     // Visible for testing
@@ -171,9 +174,10 @@ public enum EphemeralType {
                 }
             }
 
+            //如果ephemeralOwner符合扩展属性格式要求
             if ((ephemeralOwner & EXTENDED_MASK) == EXTENDED_MASK) {
-                long extendedFeatureBit = getExtendedFeatureBit(ephemeralOwner);
-                EphemeralType ephemeralType = extendedFeatureMap.get(extendedFeatureBit);
+                long extendedFeatureBit = getExtendedFeatureBit(ephemeralOwner);            //得到扩展类型type
+                EphemeralType ephemeralType = extendedFeatureMap.get(extendedFeatureBit);   //根据type获取 EphemeralType
                 if (ephemeralType == null) {
                     throw new IllegalArgumentException(String.format("Invalid ephemeralOwner. [%s]", Long.toHexString(ephemeralOwner)));
                 }
@@ -218,10 +222,12 @@ public enum EphemeralType {
         }
     }
 
+    //得到 feature type的值
     private static long getExtendedFeatureBit(long ephemeralOwner) {
         return (ephemeralOwner & RESERVED_BITS_MASK) >> RESERVED_BITS_SHIFT;
     }
 
+    //最后五位是自己的数据
     private static long getExtendedFeatureValue(long ephemeralOwner) {
         return ephemeralOwner & EXTENDED_FEATURE_VALUE_MASK;
     }

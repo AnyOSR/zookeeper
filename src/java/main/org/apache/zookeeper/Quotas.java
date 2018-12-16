@@ -21,7 +21,7 @@ package org.apache.zookeeper;
 /**
  * this class manages quotas
  * and has many other utils
- * for quota
+ * for quota     一个记录状态 一个记录配额(节点个数和数据字节数)
  */
 public class Quotas {
 
@@ -51,8 +51,7 @@ public class Quotas {
      * @return the limit quota path
      */
     public static String quotaPath(String path) {
-        return quotaZookeeper + path +
-        "/" + limitNode;
+        return quotaZookeeper + path + "/" + limitNode;
     }
 
     /**
@@ -61,8 +60,8 @@ public class Quotas {
      * @param path the actual path in zookeeper
      * @return the stat quota path
      */
+    //  /zookeeper/quota + path + /zookeeper_stats
     public static String statPath(String path) {
-        return quotaZookeeper + path + "/" +
-        statNode;
+        return quotaZookeeper + path + "/" + statNode;
     }
 }

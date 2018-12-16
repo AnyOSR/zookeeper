@@ -18,12 +18,12 @@
 
 package org.apache.zookeeper;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Id;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 @InterfaceAudience.Public
 public class ZooDefs {
@@ -90,15 +90,10 @@ public class ZooDefs {
     @InterfaceAudience.Public
     public interface Perms {
         int READ = 1 << 0;
-
         int WRITE = 1 << 1;
-
         int CREATE = 1 << 2;
-
         int DELETE = 1 << 3;
-
         int ADMIN = 1 << 4;
-
         int ALL = READ | WRITE | CREATE | DELETE | ADMIN;
     }
 
@@ -119,7 +114,7 @@ public class ZooDefs {
          * This is a completely open ACL .
          */
         public final ArrayList<ACL> OPEN_ACL_UNSAFE = new ArrayList<ACL>(
-                Collections.singletonList(new ACL(Perms.ALL, ANYONE_ID_UNSAFE)));
+                Collections.singletonList(new ACL(Perms.ALL, ANYONE_ID_UNSAFE)));      // 权限  人员
 
         /**
          * This ACL gives the creators authentication id's all permissions.
@@ -131,8 +126,7 @@ public class ZooDefs {
          * This ACL gives the world the ability to read.
          */
         public final ArrayList<ACL> READ_ACL_UNSAFE = new ArrayList<ACL>(
-                Collections
-                        .singletonList(new ACL(Perms.READ, ANYONE_ID_UNSAFE)));
+                Collections.singletonList(new ACL(Perms.READ, ANYONE_ID_UNSAFE)));
     }
 
     final public static String[] opNames = { "notification", "create",
