@@ -580,10 +580,10 @@ public class DataTree {
         byte lastdata[] = null;
         synchronized (n) {
             lastdata = n.data;
-            n.data = data;
-            n.stat.setMtime(time);
-            n.stat.setMzxid(zxid);
-            n.stat.setVersion(version);
+            n.data = data;               // 修改data
+            n.stat.setMtime(time);       // 修改mtime
+            n.stat.setMzxid(zxid);       // 修改mzxid
+            n.stat.setVersion(version);  // 修改version
             n.copyStat(s);
         }
         // now update if the path is in a quota subtree.
@@ -591,7 +591,7 @@ public class DataTree {
         if(lastPrefix != null) {
           this.updateBytes(lastPrefix, (data == null ? 0 : data.length) - (lastdata == null ? 0 : lastdata.length));
         }
-        dataWatches.triggerWatch(path, EventType.NodeDataChanged);
+        dataWatches.triggerWatch(path, EventType.NodeDataChanged);        // 触发path的NodeDataChanged时间  不通知parent？
         return s;
     }
 
@@ -615,6 +615,7 @@ public class DataTree {
         }
     }
 
+    // 获取数据
     public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         DataNode n = nodes.get(path);
         if (n == null) {
