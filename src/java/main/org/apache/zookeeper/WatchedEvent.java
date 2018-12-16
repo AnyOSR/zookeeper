@@ -72,6 +72,7 @@ public class WatchedEvent {
     /**
      *  Convert WatchedEvent to type that can be sent over network
      */
+    //将其转化为一个可以序列化的对象
     public WatcherEvent getWrapper() {
         return new WatcherEvent(eventType.getIntValue(), keeperState.getIntValue(), path);
     }

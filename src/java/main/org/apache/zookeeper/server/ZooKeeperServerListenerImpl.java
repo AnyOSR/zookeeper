@@ -28,8 +28,7 @@ import org.slf4j.LoggerFactory;
  * to ERROR representing an error status.
  */
 class ZooKeeperServerListenerImpl implements ZooKeeperServerListener {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(ZooKeeperServerListenerImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperServerListenerImpl.class);
 
     private final ZooKeeperServer zkServer;
 

@@ -165,8 +165,8 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     /**
-     * This boolean tracks whether the connection is ready for selection or
-     * not. A connection is marked as not ready for selection while it is
+     * This boolean tracks whether the connection is ready for selection or           用于标志 当前连接是否准备好select
+     * not. A connection is marked as not ready for selection while it is             当前连接正在处理IO请求时，被标记为没准备好select
      * processing an IO request. The flag is used to gatekeep pushing interest
      * op updates onto the selector.
      */
@@ -372,16 +372,20 @@ public class NIOServerCnxn extends ServerCnxn {
 
     // returns whether we are interested in writing, which is determined
     // by whether we have any pending buffers on the output queue or not
+    // outgoingBuffers不为空，则对写感兴趣
     private boolean getWriteInterest() {
         return !outgoingBuffers.isEmpty();
     }
 
     // returns whether we are interested in taking new requests, which is
     // determined by whether we are currently throttled or not
+    // 不进行流量控制，则对读感兴趣
     private boolean getReadInterest() {
         return !throttled.get();
     }
 
+    // false 表示不进行流量控制
+    // true表示进行流量控制
     private final AtomicBoolean throttled = new AtomicBoolean(false);
 
     // Throttle acceptance of new requests. If this entailed a state change,
@@ -402,6 +406,7 @@ public class NIOServerCnxn extends ServerCnxn {
     }
 
     //除了accept连接之外，每次客户端首次连接都会发送一个特定的包？所谓的connectRequest？但是其实和accept的概念不是一个？
+    //建立连接之后会有一个首次的信息同步？
     private void readConnectRequest() throws IOException, InterruptedException {
         if (!isZKServerRunning()) {
             throw new IOException("ZooKeeperServer not running");
@@ -667,23 +672,23 @@ public class NIOServerCnxn extends ServerCnxn {
             // Make space for length
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
             try {
-                baos.write(fourBytes);
-                bos.writeRecord(h, "header");
+                baos.write(fourBytes);                    // fourBytes
+                bos.writeRecord(h, "header");        // 头部
                 if (r != null) {
-                    bos.writeRecord(r, tag);
+                    bos.writeRecord(r, tag);              // body
                 }
                 baos.close();
             } catch (IOException e) {
                 LOG.error("Error serializing response");
             }
-            byte b[] = baos.toByteArray();
-            ByteBuffer bb = ByteBuffer.wrap(b);
-            bb.putInt(b.length - 4).rewind();
-            sendBuffer(bb);
+            byte b[] = baos.toByteArray();                 // 得到序列化之后的字节数组
+            ByteBuffer bb = ByteBuffer.wrap(b);            // wrap之后的ByteBuffer，position为0
+            bb.putInt(b.length - 4).rewind();              // 用长度信息填充前四个字节(fourBytes)
+            sendBuffer(bb);                                // 异步发送
             if (h.getXid() > 0) {
                 // check throttling
-                if (outstandingRequests.decrementAndGet() < 1 ||
-                    zkServer.getInProcess() < outstandingLimit) {
+                //已经发送了一个，待发送的减一 或者还没有达到zkServer的上限
+                if (outstandingRequests.decrementAndGet() < 1 || zkServer.getInProcess() < outstandingLimit) {
                     enableRecv();
                 }
             }
@@ -699,19 +704,18 @@ public class NIOServerCnxn extends ServerCnxn {
      */
     @Override
     public void process(WatchedEvent event) {
-        ReplyHeader h = new ReplyHeader(-1, -1L, 0);
+        ReplyHeader h = new ReplyHeader(-1, -1L, 0);   // 头部？
         if (LOG.isTraceEnabled()) {
-            ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                                     "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
+            ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK, "Deliver event " + event + " to 0x" + Long.toHexString(this.sessionId) + " through " + this);
         }
 
         // Convert WatchedEvent to a type that can be sent over the wire
-        WatcherEvent e = event.getWrapper();
+        WatcherEvent e = event.getWrapper();                        // 待处理的事件？
 
         sendResponse(h, e, "notification");
     }
 
-    /*
+    /*5
      * (non-Javadoc)
      *
      * @see org.apache.zookeeper.server.ServerCnxnIface#getSessionId()

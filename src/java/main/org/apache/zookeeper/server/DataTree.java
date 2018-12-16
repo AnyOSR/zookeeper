@@ -72,9 +72,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * or client connection code in it so that it can be tested in a stand alone
  * way.
  * <p>
- * The tree maintains two parallel data structures: a hashtable that maps from
- * full paths to DataNodes and a tree of DataNodes. All accesses to a path is
- * through the hashtable. The tree is traversed only when serializing to disk.
+ * The tree maintains two parallel data structures: a hashtable that maps from      hashtable 映射path到DataNodes
+ * full paths to DataNodes and a tree of DataNodes. All accesses to a path is       一个都是DataNodes的树
+ * through the hashtable. The tree is traversed only when serializing to disk.      所有通过path的访问都是通过hashtable   序列化到disk时利用tree
  */
 public class DataTree {
     private static final Logger LOG = LoggerFactory.getLogger(DataTree.class);
@@ -83,8 +83,7 @@ public class DataTree {
      * This hashtable provides a fast lookup to the datanodes. The tree is the
      * source of truth and is where all the locking occurs
      */
-    private final ConcurrentHashMap<String, DataNode> nodes =
-        new ConcurrentHashMap<String, DataNode>();
+    private final ConcurrentHashMap<String, DataNode> nodes = new ConcurrentHashMap<String, DataNode>();
 
     private final WatchManager dataWatches = new WatchManager();
 
@@ -106,8 +105,7 @@ public class DataTree {
     private static final String quotaZookeeper = Quotas.quotaZookeeper;
 
     /** this will be the string thats stored as a child of /zookeeper */
-    private static final String quotaChildZookeeper = quotaZookeeper
-            .substring(procZookeeper.length() + 1);
+    private static final String quotaChildZookeeper = quotaZookeeper.substring(procZookeeper.length() + 1);
 
     /**
      * the zookeeper config node that acts as the config management node for
@@ -116,8 +114,7 @@ public class DataTree {
     private static final String configZookeeper = ZooDefs.CONFIG_NODE;
 
     /** this will be the string thats stored as a child of /zookeeper */
-    private static final String configChildZookeeper = configZookeeper
-            .substring(procZookeeper.length() + 1);
+    private static final String configChildZookeeper = configZookeeper.substring(procZookeeper.length() + 1);
 
     /**
      * the path trie that keeps track fo the quota nodes in this datatree
@@ -127,20 +124,17 @@ public class DataTree {
     /**
      * This hashtable lists the paths of the ephemeral nodes of a session.
      */
-    private final Map<Long, HashSet<String>> ephemerals =
-        new ConcurrentHashMap<Long, HashSet<String>>();
+    private final Map<Long, HashSet<String>> ephemerals = new ConcurrentHashMap<Long, HashSet<String>>();
 
     /**
      * This set contains the paths of all container nodes
      */
-    private final Set<String> containers =
-            Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private final Set<String> containers = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     /**
      * This set contains the paths of all ttl nodes
      */
-    private final Set<String> ttls =
-            Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private final Set<String> ttls = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
     private final ReferenceCountedACLCache aclCache = new ReferenceCountedACLCache();
 

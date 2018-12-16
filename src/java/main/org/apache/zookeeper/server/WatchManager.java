@@ -18,20 +18,19 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * This class manages watches. It allows watches to be associated with a string
@@ -40,11 +39,10 @@ import org.slf4j.LoggerFactory;
 class WatchManager {
     private static final Logger LOG = LoggerFactory.getLogger(WatchManager.class);
 
-    private final HashMap<String, HashSet<Watcher>> watchTable =
-        new HashMap<String, HashSet<Watcher>>();
-
-    private final HashMap<Watcher, HashSet<String>> watch2Paths =
-        new HashMap<Watcher, HashSet<String>>();
+    // path set<watcher> 一个path可以被多个watcher监控
+    private final HashMap<String, HashSet<Watcher>> watchTable = new HashMap<String, HashSet<Watcher>>();        // path 到 watch
+    //一个watcher可以监控多个path
+    private final HashMap<Watcher, HashSet<String>> watch2Paths = new HashMap<Watcher, HashSet<String>>();       // watch 到 path
 
     synchronized int size(){
         int result = 0;
@@ -54,6 +52,7 @@ class WatchManager {
         return result;
     }
 
+    //添加 Watch
     synchronized void addWatch(String path, Watcher watcher) {
         HashSet<Watcher> list = watchTable.get(path);
         if (list == null) {
@@ -95,20 +94,17 @@ class WatchManager {
     }
 
     Set<Watcher> triggerWatch(String path, EventType type, Set<Watcher> supress) {
-        WatchedEvent e = new WatchedEvent(type,
-                KeeperState.SyncConnected, path);
+        WatchedEvent e = new WatchedEvent(type, KeeperState.SyncConnected, path);
         HashSet<Watcher> watchers;
         synchronized (this) {
-            watchers = watchTable.remove(path);
-            if (watchers == null || watchers.isEmpty()) {
+            watchers = watchTable.remove(path);              // trigger以后，该path下所有的watcher都将被移除
+            if (watchers == null || watchers.isEmpty()) {    // 检测path下是否存在watcher
                 if (LOG.isTraceEnabled()) {
-                    ZooTrace.logTraceMessage(LOG,
-                            ZooTrace.EVENT_DELIVERY_TRACE_MASK,
-                            "No watchers for " + path);
+                    ZooTrace.logTraceMessage(LOG, ZooTrace.EVENT_DELIVERY_TRACE_MASK, "No watchers for " + path);
                 }
                 return null;
             }
-            for (Watcher w : watchers) {
+            for (Watcher w : watchers) {                     // 将该path从所有的watcher中移除
                 HashSet<String> paths = watch2Paths.get(w);
                 if (paths != null) {
                     paths.remove(path);
@@ -119,7 +115,7 @@ class WatchManager {
             if (supress != null && supress.contains(w)) {
                 continue;
             }
-            w.process(e);
+            w.process(e);                 //触发process
         }
         return watchers;
     }
@@ -131,8 +127,7 @@ class WatchManager {
     public synchronized String toString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(watch2Paths.size()).append(" connections watching ")
-            .append(watchTable.size()).append(" paths\n");
+        sb.append(watch2Paths.size()).append(" connections watching ").append(watchTable.size()).append(" paths\n");
 
         int total = 0;
         for (HashSet<String> paths : watch2Paths.values()) {
@@ -260,7 +255,6 @@ class WatchManager {
         for (HashSet<String> paths : watch2Paths.values()) {
             totalWatches += paths.size();
         }
-        return new WatchesSummary (watch2Paths.size(), watchTable.size(),
-                                   totalWatches);
+        return new WatchesSummary (watch2Paths.size(), watchTable.size(), totalWatches);
     }
 }
