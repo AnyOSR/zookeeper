@@ -166,6 +166,7 @@ public enum EphemeralType {
      * @param ephemeralOwner the ZNode's ephemeral owner
      * @return type
      */
+    // 根据ephemeralOwner获取EphemeralType
     public static EphemeralType get(long ephemeralOwner) {
         if (extendedEphemeralTypesEnabled()) {
             if (Boolean.getBoolean(TTL_3_5_3_EMULATION_PROPERTY)) {
@@ -187,7 +188,7 @@ public enum EphemeralType {
         if (ephemeralOwner == CONTAINER_EPHEMERAL_OWNER) {
             return CONTAINER;
         }
-        return (ephemeralOwner == 0) ? VOID : NORMAL;
+        return (ephemeralOwner == 0) ? VOID : NORMAL;        // 为0是VOID
     }
 
     /**

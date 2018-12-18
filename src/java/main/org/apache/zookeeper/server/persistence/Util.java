@@ -18,28 +18,18 @@
 
 package org.apache.zookeeper.server.persistence;
 
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.Serializable;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Properties;
-
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.InputArchive;
 import org.apache.jute.OutputArchive;
 import org.apache.jute.Record;
+import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.txn.TxnHeader;
+
+import java.io.*;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * A collection of utility methods for dealing with file name parsing, 
@@ -92,6 +82,7 @@ public class Util {
      * @param zxid used as a suffix
      * @return file name
      */
+    // 创建snapshot文件名
     public static String makeSnapshotName(long zxid) {
         return FileSnap.SNAPSHOT_FILE_PREFIX + "." + Long.toHexString(zxid);
     }

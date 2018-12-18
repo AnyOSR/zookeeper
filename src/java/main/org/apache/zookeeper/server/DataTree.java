@@ -703,17 +703,11 @@ public class DataTree {
 
     static public class ProcessTxnResult {
         public long clientId;
-
         public int cxid;
-
         public long zxid;
-
         public int err;
-
         public int type;
-
         public String path;
-
         public Stat stat;
 
         public List<ProcessTxnResult> multiResult;
@@ -743,7 +737,6 @@ public class DataTree {
         public int hashCode() {
             return (int) ((clientId ^ cxid) % Integer.MAX_VALUE);
         }
-
     }
 
     public volatile long lastProcessedZxid = 0;
@@ -766,8 +759,8 @@ public class DataTree {
                             createTxn.getPath(),
                             createTxn.getData(),
                             createTxn.getAcl(),
-                            createTxn.getEphemeral() ? header.getClientId() : 0,
-                            createTxn.getParentCVersion(),
+                            createTxn.getEphemeral() ? header.getClientId() : 0,   // 如果不是永久节点，则ephemeralOwner为clientId，否则为0
+                            createTxn.getParentCVersion(),                                        // 0对应VOID，永久节点
                             header.getZxid(), header.getTime(), null);
                     break;
                 case OpCode.create2:
@@ -819,15 +812,12 @@ public class DataTree {
                 case OpCode.setData:
                     SetDataTxn setDataTxn = (SetDataTxn) txn;
                     rc.path = setDataTxn.getPath();
-                    rc.stat = setData(setDataTxn.getPath(), setDataTxn
-                            .getData(), setDataTxn.getVersion(), header
-                            .getZxid(), header.getTime());
+                    rc.stat = setData(setDataTxn.getPath(), setDataTxn.getData(), setDataTxn.getVersion(), header.getZxid(), header.getTime());
                     break;
                 case OpCode.setACL:
                     SetACLTxn setACLTxn = (SetACLTxn) txn;
                     rc.path = setACLTxn.getPath();
-                    rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(),
-                            setACLTxn.getVersion());
+                    rc.stat = setACL(setACLTxn.getPath(), setACLTxn.getAcl(), setACLTxn.getVersion());
                     break;
                 case OpCode.closeSession:
                     killSession(header.getClientId(), header.getZxid());
@@ -840,21 +830,21 @@ public class DataTree {
                     CheckVersionTxn checkTxn = (CheckVersionTxn) txn;
                     rc.path = checkTxn.getPath();
                     break;
-                case OpCode.multi:
+                case OpCode.multi:                                              // 批量操作？ 应该是递归解决吧？
                     MultiTxn multiTxn = (MultiTxn) txn ;
                     List<Txn> txns = multiTxn.getTxns();
                     rc.multiResult = new ArrayList<ProcessTxnResult>();
-                    boolean failed = false;
-                    for (Txn subtxn : txns) {
+                    boolean failed = false;                             // 当前指令集合中是否含有OpCode.error
+                    for (Txn subtxn : txns) {                           // 如果含有 OpCode.error
                         if (subtxn.getType() == OpCode.error) {
                             failed = true;
                             break;
                         }
                     }
 
-                    boolean post_failed = false;
+                    boolean post_failed = false;           // OpCode.error的指令是否已经出现了，包括自身
                     for (Txn subtxn : txns) {
-                        ByteBuffer bb = ByteBuffer.wrap(subtxn.getData());
+                        ByteBuffer bb = ByteBuffer.wrap(subtxn.getData());     // 每次操作的数据
                         Record record = null;
                         switch (subtxn.getType()) {
                             case OpCode.create:
@@ -887,9 +877,13 @@ public class DataTree {
 
                         ByteBufferInputStream.byteBuffer2Record(bb, record);
 
+                        // 如果是failed 且 当前type不为 error
+                        // 即当前指令 之前或者之后存在 OpCode.error的指令
                         if (failed && subtxn.getType() != OpCode.error){
-                            int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue()
-                                                 : Code.OK.intValue();
+
+                            //如果之前已经出现了OpCode.error的指令  RUNTIMEINCONSISTENCY
+                            // 否则 OK
+                            int ec = post_failed ? Code.RUNTIMEINCONSISTENCY.intValue() : Code.OK.intValue();
 
                             subtxn.setType(OpCode.error);
                             record = new ErrorTxn(ec);
@@ -904,6 +898,9 @@ public class DataTree {
                                                          subtxn.getType());
                         ProcessTxnResult subRc = processTxn(subHdr, record);
                         rc.multiResult.add(subRc);
+
+                        //如果处理结果的err不为0，且rc.err为0
+                        //则设置rc.err为处理结果的err
                         if (subRc.err != 0 && rc.err == 0) {
                             rc.err = subRc.err ;
                         }
@@ -921,17 +918,17 @@ public class DataTree {
             }
         }
         /*
-         * A snapshot might be in progress while we are modifying the data
-         * tree. If we set lastProcessedZxid prior to making corresponding
-         * change to the tree, then the zxid associated with the snapshot
-         * file will be ahead of its contents. Thus, while restoring from
-         * the snapshot, the restore method will not apply the transaction
+         * A snapshot might be in progress while we are modifying the data           当我们修改 tree data时，一个snapshot可能正在 in progress？（持久化？）
+         * tree. If we set lastProcessedZxid prior to making corresponding           如果我们在修改tree之前改变了lastProcessedZxid
+         * change to the tree, then the zxid associated with the snapshot            那么，和snapshot文件关联的zxid就会超过其内容(表现为snapshot里面的zxid会小于当前zxid)
+         * file will be ahead of its contents. Thus, while restoring from            那么，当从snapshot进行恢复操作时
+         * the snapshot, the restore method will not apply the transaction           将不会应用zxid的transaction
          * for zxid associated with the snapshot file, since the restore
          * method assumes that transaction to be present in the snapshot.
          *
-         * To avoid this, we first apply the transaction and then modify
-         * lastProcessedZxid.  During restore, we correctly handle the
-         * case where the snapshot contains data ahead of the zxid associated
+         * To avoid this, we first apply the transaction and then modify             为了避免this，我们先实施这个事务，然后修改 lastProcessedZxid
+         * lastProcessedZxid.  During restore, we correctly handle the               恢复的时候，只会有一种情况
+         * case where the snapshot contains data ahead of the zxid associated        即，zxid对应的snapshot的内容的实际zxid会超过其声明的zxid
          * with the file.
          */
         if (rc.zxid > lastProcessedZxid) {
@@ -939,12 +936,12 @@ public class DataTree {
         }
 
         /*
-         * Snapshots are taken lazily. It can happen that the child
-         * znodes of a parent are created after the parent
-         * is serialized. Therefore, while replaying logs during restore, a
-         * create might fail because the node was already
-         * created.
-         *
+         * Snapshots are taken lazily. It can happen that the child      当父节点被序列化后，子节点可能正在创建
+         * znodes of a parent are created after the parent               (父节点和子节点应该是同一个zxid？当前snapshot对应的最大zxid应该不包含当前这个zxid？)
+         * is serialized. Therefore, while replaying logs during restore, a   那么当从snapshot恢复的时候，由于parent节点之前已经被序列化过，当恢复了snapshot后，
+         * create might fail because the node was already                     父节点已经被创建？
+         * created.                                                          然后回放事务日志
+         *                                                                   会发现父节点已经被创建了 则NODEEXISTS？
          * After seeing this failure, we should increment
          * the cversion of the parent znode since the parent was serialized
          * before its children.
@@ -1090,7 +1087,7 @@ public class DataTree {
      * this method sets up the path trie and sets up stats for quota nodes
      */
     private void setupQuota() {
-        String quotaPath = Quotas.quotaZookeeper;
+        String quotaPath = Quotas.quotaZookeeper;             //    /zookeeper/quota
         DataNode node = getNode(quotaPath);
         if (node == null) {
             return;
@@ -1109,6 +1106,7 @@ public class DataTree {
      * @throws IOException
      * @throws InterruptedException
      */
+    // 序列化节点 以path为根节点的子树
     void serializeNode(OutputArchive oa, StringBuilder path) throws IOException {
         String pathString = path.toString();
         DataNode node = getNode(pathString);
@@ -1140,9 +1138,10 @@ public class DataTree {
         }
     }
 
+    //序列化
     public void serialize(OutputArchive oa, String tag) throws IOException {
-        aclCache.serialize(oa);
-        serializeNode(oa, new StringBuilder(""));
+        aclCache.serialize(oa);                     //序列化ACL
+        serializeNode(oa, new StringBuilder(""));   //序列化树
         // / marks end of stream
         // we need to check if clear had been called in between the snapshot.
         if (root != null) {
@@ -1286,9 +1285,7 @@ public class DataTree {
         childWatches.removeWatcher(watcher);
     }
 
-    public void setWatches(long relativeZxid, List<String> dataWatches,
-            List<String> existWatches, List<String> childWatches,
-            Watcher watcher) {
+    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches, Watcher watcher) {
         for (String path : dataWatches) {
             DataNode node = getNode(path);
             WatchedEvent e = null;
@@ -1336,8 +1333,7 @@ public class DataTree {
       * @throws KeeperException.NoNodeException
       *     If znode not found.
       **/
-    public void setCversionPzxid(String path, int newCversion, long zxid)
-        throws KeeperException.NoNodeException {
+    public void setCversionPzxid(String path, int newCversion, long zxid) throws KeeperException.NoNodeException {
         if (path.endsWith("/")) {
            path = path.substring(0, path.length() - 1);
         }
