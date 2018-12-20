@@ -27502,6 +27502,7 @@
 											},
 											"visible": false,
 											"font": "Arial;13;0",
+											"left": -352,
 											"top": -96,
 											"height": 13
 										},
@@ -27512,9 +27513,9 @@
 												"$ref": "AAAAAAFnwXb1l/SIKUM="
 											},
 											"font": "Arial;13;1",
-											"left": 531,
+											"left": 355,
 											"top": 1239,
-											"width": 80.55810546875,
+											"width": 495.57421875,
 											"height": 13,
 											"text": "FileSnap"
 										},
@@ -27526,6 +27527,7 @@
 											},
 											"visible": false,
 											"font": "Arial;13;0",
+											"left": -352,
 											"top": -96,
 											"width": 73.67724609375,
 											"height": 13,
@@ -27539,15 +27541,16 @@
 											},
 											"visible": false,
 											"font": "Arial;13;0",
+											"left": -352,
 											"top": -96,
 											"height": 13,
 											"horizontalAlignment": 1
 										}
 									],
 									"font": "Arial;13;0",
-									"left": 526,
+									"left": 350,
 									"top": 1232,
-									"width": 90.55810546875,
+									"width": 505.57421875,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAFnwXb1l/SJnOs="
@@ -27582,18 +27585,18 @@
 												"$ref": "AAAAAAFnxuK2VroGuSM="
 											},
 											"font": "Arial;13;0",
-											"left": 531,
+											"left": 355,
 											"top": 1262,
-											"width": 80.55810546875,
+											"width": 495.57421875,
 											"height": 13,
 											"text": "+snapDir: File",
 											"horizontalAlignment": 0
 										}
 									],
 									"font": "Arial;13;0",
-									"left": 526,
+									"left": 350,
 									"top": 1257,
-									"width": 90.55810546875,
+									"width": 505.57421875,
 									"height": 23
 								},
 								{
@@ -27605,11 +27608,64 @@
 									"model": {
 										"$ref": "AAAAAAFnwXb1l/SF8uI="
 									},
+									"subViews": [
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAFnzA23JDvXIC4=",
+											"_parent": {
+												"$ref": "AAAAAAFnwXb1mPSOmDI="
+											},
+											"model": {
+												"$ref": "AAAAAAFnzA22ijukuNY="
+											},
+											"font": "Arial;13;0",
+											"left": 355,
+											"top": 1285,
+											"width": 495.57421875,
+											"height": 13,
+											"text": "«long deserialize(DataTree dt, Map<Long, Integer> sessions)»+deserialize()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAFnzA5n80c1bcE=",
+											"_parent": {
+												"$ref": "AAAAAAFnwXb1mPSOmDI="
+											},
+											"model": {
+												"$ref": "AAAAAAFnzA5nhkcCfTo="
+											},
+											"font": "Arial;13;0",
+											"left": 355,
+											"top": 1300,
+											"width": 495.57421875,
+											"height": 13,
+											"text": "«public File findMostRecentSnapshot()»+findMostRecentSnapshot()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAFnzA8eX0ndfus=",
+											"_parent": {
+												"$ref": "AAAAAAFnwXb1mPSOmDI="
+											},
+											"model": {
+												"$ref": "AAAAAAFnzA8d8kmqiFE="
+											},
+											"font": "Arial;13;0",
+											"left": 355,
+											"top": 1315,
+											"width": 495.57421875,
+											"height": 13,
+											"text": "«void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)»+serialize()",
+											"horizontalAlignment": 0
+										}
+									],
 									"font": "Arial;13;0",
-									"left": 526,
+									"left": 350,
 									"top": 1280,
-									"width": 90.55810546875,
-									"height": 10
+									"width": 505.57421875,
+									"height": 53
 								},
 								{
 									"_type": "UMLReceptionCompartmentView",
@@ -27622,6 +27678,7 @@
 									},
 									"visible": false,
 									"font": "Arial;13;0",
+									"left": -176,
 									"top": -48,
 									"width": 10,
 									"height": 10
@@ -27637,6 +27694,7 @@
 									},
 									"visible": false,
 									"font": "Arial;13;0",
+									"left": -176,
 									"top": -48,
 									"width": 10,
 									"height": 10
@@ -27644,10 +27702,10 @@
 							],
 							"font": "Arial;13;0",
 							"containerChangeable": true,
-							"left": 526,
+							"left": 350,
 							"top": 1232,
-							"width": 90.55810546875,
-							"height": 58,
+							"width": 505.57421875,
+							"height": 101,
 							"nameCompartment": {
 								"$ref": "AAAAAAFnwXb1l/SIKUM="
 							},
@@ -33281,6 +33339,35 @@
 							},
 							"name": "snapDir",
 							"type": "File"
+						}
+					],
+					"operations": [
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAFnzA22ijukuNY=",
+							"_parent": {
+								"$ref": "AAAAAAFnwXb1l/SF8uI="
+							},
+							"name": "deserialize",
+							"stereotype": "long deserialize(DataTree dt, Map<Long, Integer> sessions)"
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAFnzA5nhkcCfTo=",
+							"_parent": {
+								"$ref": "AAAAAAFnwXb1l/SF8uI="
+							},
+							"name": "findMostRecentSnapshot",
+							"stereotype": "public File findMostRecentSnapshot()"
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAFnzA8d8kmqiFE=",
+							"_parent": {
+								"$ref": "AAAAAAFnwXb1l/SF8uI="
+							},
+							"name": "serialize",
+							"stereotype": "void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)"
 						}
 					]
 				}

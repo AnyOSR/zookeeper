@@ -202,8 +202,7 @@ public class FileSnap implements SnapShot {
      * @param sessions the sessions to be serialized
      * @param snapShot the file to store snapshot into
      */
-    public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot)
-            throws IOException {
+    public synchronized void serialize(DataTree dt, Map<Long, Integer> sessions, File snapShot) throws IOException {
         if (!close) {
             try (OutputStream sessOS = new BufferedOutputStream(new FileOutputStream(snapShot));
                  CheckedOutputStream crcOut = new CheckedOutputStream(sessOS, new Adler32())) {
