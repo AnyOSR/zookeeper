@@ -27,7 +27,7 @@ import java.nio.channels.FileChannel;
 
 public class FilePadding {
     private static final Logger LOG;
-    private static long preAllocSize = 65536 * 1024;
+    private static long preAllocSize = 65536 * 1024;   // 2 ^16 * 2 ^10 = 2^6 * 2^10 * 2^10 = 64 MB
     private static final ByteBuffer fill = ByteBuffer.allocateDirect(1);
 
     static {
@@ -75,15 +75,15 @@ public class FilePadding {
     long padFile(FileChannel fileChannel) throws IOException {
         long newFileSize = calculateFileSizeWithPadding(fileChannel.position(), currentSize, preAllocSize);
         if (currentSize != newFileSize) {
-            fileChannel.write((ByteBuffer) fill.position(0), newFileSize - fill.remaining());
+            fileChannel.write((ByteBuffer) fill.position(0), newFileSize - fill.remaining());        // 填充0
             currentSize = newFileSize;
         }
         return currentSize;
     }
 
     /**
-     * Calculates a new file size with padding. We only return a new size if
-     * the current file position is sufficiently close (less than 4K) to end of
+     * Calculates a new file size with padding. We only return a new size if           如果当前的文件位置已经快接近文件末尾(少于4K)
+     * the current file position is sufficiently close (less than 4K) to end of        且 preAllocSize > 0
      * file and preAllocSize is > 0.
      *
      * @param position     the point in the file we have written to
@@ -101,7 +101,7 @@ public class FilePadding {
             // file size is larger than what we already have
             if (position > fileSize) {
                 fileSize = position + preAllocSize;
-                fileSize -= fileSize % preAllocSize;
+                fileSize -= fileSize % preAllocSize;          //fileSize是preAllocSize的整数倍
             } else {
                 fileSize += preAllocSize;
             }

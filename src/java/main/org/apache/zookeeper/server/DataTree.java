@@ -1144,7 +1144,7 @@ public class DataTree {
         serializeNode(oa, new StringBuilder(""));   //序列化树
         // / marks end of stream
         // we need to check if clear had been called in between the snapshot.
-        if (root != null) {
+        if (root != null) {                        // root不为null，则写一个/
             oa.writeString("/", "path");
         }
     }

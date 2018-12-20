@@ -125,6 +125,7 @@ public class Util {
      * @param prefix the file name prefix (snapshot or log)
      * @return zxid
      */
+    // 从文件名解析zxid
     public static long getZxidFromName(String name, String prefix) {
         long zxid = -1;
         String nameParts[] = name.split("\\.");
@@ -162,21 +163,18 @@ public class Util {
             byte bytes[] = new byte[5];
             int readlen = 0;
             int l;
-            while (readlen < 5 &&
-                    (l = raf.read(bytes, readlen, bytes.length - readlen)) >= 0) {
+            while (readlen < 5 && (l = raf.read(bytes, readlen, bytes.length - readlen)) >= 0) {
                 readlen += l;
             }
             if (readlen != bytes.length) {
-                LOG.info("Invalid snapshot " + f
-                        + " too short, len = " + readlen);
+                LOG.info("Invalid snapshot " + f + " too short, len = " + readlen);
                 return false;
             }
             ByteBuffer bb = ByteBuffer.wrap(bytes);
             int len = bb.getInt();
             byte b = bb.get();
             if (len != 1 || b != '/') {
-                LOG.info("Invalid snapshot " + f + " len = " + len
-                        + " byte = " + (b & 0xff));
+                LOG.info("Invalid snapshot " + f + " len = " + len + " byte = " + (b & 0xff));
                 return false;
             }
         }
@@ -216,14 +214,13 @@ public class Util {
      * @return serialized transaction record
      * @throws IOException
      */
-    public static byte[] marshallTxnEntry(TxnHeader hdr, Record txn)
-            throws IOException {
+    public static byte[] marshallTxnEntry(TxnHeader hdr, Record txn) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         OutputArchive boa = BinaryOutputArchive.getArchive(baos);
 
-        hdr.serialize(boa, "hdr");
-        if (txn != null) {
-            txn.serialize(boa, "txn");
+        hdr.serialize(boa, "hdr");         //序列化事务日志头部
+        if (txn != null) { //可能为null？
+            txn.serialize(boa, "txn");     //序列化事务日志体
         }
         return baos.toByteArray();
     }
@@ -235,8 +232,7 @@ public class Util {
      * @param bytes serialized transaction record
      * @throws IOException
      */
-    public static void writeTxnBytes(OutputArchive oa, byte[] bytes)
-            throws IOException {
+    public static void writeTxnBytes(OutputArchive oa, byte[] bytes) throws IOException {
         oa.writeBuffer(bytes, "txnEntry");
         oa.writeByte((byte) 0x42, "EOR"); // 'B'
     }
@@ -246,9 +242,7 @@ public class Util {
      * Compare file file names of form "prefix.version". Sort order result
      * returned in order of version.
      */
-    private static class DataDirFileComparator
-        implements Comparator<File>, Serializable
-    {
+    private static class DataDirFileComparator implements Comparator<File>, Serializable {
         private static final long serialVersionUID = -2648639884525140318L;
 
         private String prefix;
@@ -277,8 +271,7 @@ public class Util {
      * descending order
      * @return sorted input files
      */
-    public static List<File> sortDataDir(File[] files, String prefix, boolean ascending)
-    {
+    public static List<File> sortDataDir(File[] files, String prefix, boolean ascending) {
         if(files==null)
             return new ArrayList<File>(0);
         List<File> filelist = Arrays.asList(files);

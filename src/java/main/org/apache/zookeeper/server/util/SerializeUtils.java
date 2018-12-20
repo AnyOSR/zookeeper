@@ -53,8 +53,7 @@ import java.util.Map.Entry;
 public class SerializeUtils {
     private static final Logger LOG = LoggerFactory.getLogger(SerializeUtils.class);
     
-    public static Record deserializeTxn(byte txnBytes[], TxnHeader hdr)
-            throws IOException {
+    public static Record deserializeTxn(byte txnBytes[], TxnHeader hdr) throws IOException {
         final ByteArrayInputStream bais = new ByteArrayInputStream(txnBytes);
         InputArchive ia = BinaryInputArchive.getArchive(bais);
 
@@ -124,28 +123,24 @@ public class SerializeUtils {
         return txn;
     }
 
-    public static void deserializeSnapshot(DataTree dt,InputArchive ia,
-            Map<Long, Integer> sessions) throws IOException {
+    public static void deserializeSnapshot(DataTree dt,InputArchive ia, Map<Long, Integer> sessions) throws IOException {
         int count = ia.readInt("count");
         while (count > 0) {
             long id = ia.readLong("id");
             int to = ia.readInt("timeout");
             sessions.put(id, to);
             if (LOG.isTraceEnabled()) {
-                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK,
-                        "loadData --- session in archive: " + id
-                        + " with timeout: " + to);
+                ZooTrace.logTraceMessage(LOG, ZooTrace.SESSION_TRACE_MASK, "loadData --- session in archive: " + id + " with timeout: " + to);
             }
             count--;
         }
         dt.deserialize(ia, "tree");
     }
 
-    public static void serializeSnapshot(DataTree dt,OutputArchive oa,
-            Map<Long, Integer> sessions) throws IOException {
+    public static void serializeSnapshot(DataTree dt,OutputArchive oa, Map<Long, Integer> sessions) throws IOException {
         HashMap<Long, Integer> sessSnap = new HashMap<Long, Integer>(sessions);
-        oa.writeInt(sessSnap.size(), "count");
-        for (Entry<Long, Integer> entry : sessSnap.entrySet()) {
+        oa.writeInt(sessSnap.size(), "count");                    // 序列化session个数
+        for (Entry<Long, Integer> entry : sessSnap.entrySet()) {      //  序列化每个session
             oa.writeLong(entry.getKey().longValue(), "id");
             oa.writeInt(entry.getValue().intValue(), "timeout");
         }
