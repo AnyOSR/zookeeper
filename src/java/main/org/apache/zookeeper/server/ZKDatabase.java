@@ -179,15 +179,15 @@ public class ZKDatabase {
     public synchronized List<Proposal> getCommittedLog() {
         ReadLock rl = logLock.readLock();
         // only make a copy if this thread isn't already holding a lock
-        if(logLock.getReadHoldCount() <=0) {
+        if(logLock.getReadHoldCount() <=0) {   // 当前还没有获取到读锁
             try {
                 rl.lock();
-                return new LinkedList<Proposal>(this.committedLog);
+                return new LinkedList<Proposal>(this.committedLog);   // copy一份
             } finally {
                 rl.unlock();
             }
         }
-        return this.committedLog;
+        return this.committedLog;        // 已经获取到读锁了，直接返回committedLog
     }
 
     /**
@@ -258,7 +258,7 @@ public class ZKDatabase {
         WriteLock wl = logLock.writeLock();
         try {
             wl.lock();
-            if (committedLog.size() > commitLogCount) {
+            if (committedLog.size() > commitLogCount) {       // commitLogCount 长度限制
                 committedLog.removeFirst();
                 minCommittedLog = committedLog.getFirst().packet.getZxid();
             }
@@ -282,8 +282,7 @@ public class ZKDatabase {
     public boolean isTxnLogSyncEnabled() {
         boolean enabled = snapshotSizeFactor >= 0;
         if (enabled) {
-            LOG.info("On disk txn sync enabled with snapshotSizeFactor "
-                + snapshotSizeFactor);
+            LOG.info("On disk txn sync enabled with snapshotSizeFactor " + snapshotSizeFactor);
         } else {
             LOG.info("On disk txn sync disabled");
         }
@@ -311,8 +310,7 @@ public class ZKDatabase {
      *                  0 is unlimited, negative value means disable.
      * @return list of proposal (request part of each proposal is null)
      */
-    public Iterator<Proposal> getProposalsFromTxnLog(long startZxid,
-                                                     long sizeLimit) {
+    public Iterator<Proposal> getProposalsFromTxnLog(long startZxid, long sizeLimit) {
         if (sizeLimit < 0) {
             LOG.debug("Negative size limit - retrieving proposal via txnlog is disabled");
             return TxnLogProposalIterator.EMPTY_ITERATOR;
@@ -325,10 +323,8 @@ public class ZKDatabase {
 
             // If we cannot guarantee that this is strictly the starting txn
             // after a given zxid, we should fail.
-            if ((itr.getHeader() != null)
-                    && (itr.getHeader().getZxid() > startZxid)) {
-                LOG.warn("Unable to find proposals from txnlog for zxid: "
-                        + startZxid);
+            if ((itr.getHeader() != null) && (itr.getHeader().getZxid() > startZxid)) {
+                LOG.warn("Unable to find proposals from txnlog for zxid: " + startZxid);
                 itr.close();
                 return TxnLogProposalIterator.EMPTY_ITERATOR;
             }
@@ -336,8 +332,7 @@ public class ZKDatabase {
             if (sizeLimit > 0) {
                 long txnSize = itr.getStorageSize();
                 if (txnSize > sizeLimit) {
-                    LOG.info("Txnlog size: " + txnSize + " exceeds sizeLimit: "
-                            + sizeLimit);
+                    LOG.info("Txnlog size: " + txnSize + " exceeds sizeLimit: " + sizeLimit);
                     itr.close();
                     return TxnLogProposalIterator.EMPTY_ITERATOR;
                 }
@@ -452,8 +447,7 @@ public class ZKDatabase {
      * @return
      * @throws KeeperException.NoNodeException
      */
-    public byte[] getData(String path, Stat stat, Watcher watcher)
-    throws KeeperException.NoNodeException {
+    public byte[] getData(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         return dataTree.getData(path, stat, watcher);
     }
 
@@ -465,8 +459,7 @@ public class ZKDatabase {
      * @param childWatches the child watches the client wants to reset
      * @param watcher the watcher function
      */
-    public void setWatches(long relativeZxid, List<String> dataWatches,
-            List<String> existWatches, List<String> childWatches, Watcher watcher) {
+    public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches, Watcher watcher) {
         dataTree.setWatches(relativeZxid, dataWatches, existWatches, childWatches, watcher);
     }
 
@@ -489,8 +482,7 @@ public class ZKDatabase {
      * @return the list of children for this path
      * @throws KeeperException.NoNodeException
      */
-    public List<String> getChildren(String path, Stat stat, Watcher watcher)
-    throws KeeperException.NoNodeException {
+    public List<String> getChildren(String path, Stat stat, Watcher watcher) throws KeeperException.NoNodeException {
         return dataTree.getChildren(path, stat, watcher);
     }
 

@@ -17,34 +17,6 @@
  */
 package org.apache.zookeeper.server.quorum;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.security.sasl.SaslException;
-
 import org.apache.zookeeper.KeeperException.BadArgumentsException;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom;
 import org.apache.zookeeper.common.AtomicFileWritingIdiom.WriterStatement;
@@ -55,23 +27,25 @@ import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.ZooKeeperThread;
-import org.apache.zookeeper.server.quorum.auth.QuorumAuth;
-import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
-import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
-import org.apache.zookeeper.server.quorum.auth.SaslQuorumAuthLearner;
-import org.apache.zookeeper.server.quorum.auth.SaslQuorumAuthServer;
-import org.apache.zookeeper.server.quorum.auth.NullQuorumAuthLearner;
-import org.apache.zookeeper.server.quorum.auth.NullQuorumAuthServer;
 import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.admin.AdminServerFactory;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig.ConfigException;
+import org.apache.zookeeper.server.quorum.auth.*;
 import org.apache.zookeeper.server.quorum.flexible.QuorumMaj;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.server.util.ZxidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.security.sasl.SaslException;
+import java.io.*;
+import java.net.*;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class manages the quorum protocol. There are three states this server
@@ -120,6 +94,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      */
     private ZKDatabase zkDb;
 
+    // 具体的server信息 主要是端口
     public static class QuorumServer {
         public InetSocketAddress addr = null;
 
@@ -829,10 +804,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             for (QuorumServer qs : getView().values()) {
                 authzHosts.add(qs.hostname);
             }
-            authServer = new SaslQuorumAuthServer(isQuorumServerSaslAuthRequired(),
-                    quorumServerLoginContext, authzHosts);
-            authLearner = new SaslQuorumAuthLearner(isQuorumLearnerSaslAuthRequired(),
-                    quorumServicePrincipal, quorumLearnerLoginContext);
+            authServer = new SaslQuorumAuthServer(isQuorumServerSaslAuthRequired(), quorumServerLoginContext, authzHosts);
+            authLearner = new SaslQuorumAuthLearner(isQuorumLearnerSaslAuthRequired(), quorumServicePrincipal, quorumLearnerLoginContext);
         } else {
             authServer = new NullQuorumAuthServer();
             authLearner = new NullQuorumAuthLearner();
@@ -865,35 +838,32 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             zkDb.loadDataBase();
 
             // load the epochs
-            long lastProcessedZxid = zkDb.getDataTree().lastProcessedZxid;
-            long epochOfZxid = ZxidUtils.getEpochFromZxid(lastProcessedZxid);
+            long lastProcessedZxid = zkDb.getDataTree().lastProcessedZxid;         // zxid
+            long epochOfZxid = ZxidUtils.getEpochFromZxid(lastProcessedZxid);      // epoch
             try {
-                currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);
+                currentEpoch = readLongFromFile(CURRENT_EPOCH_FILENAME);           // read currentEpoch from file
             } catch(FileNotFoundException e) {
             	// pick a reasonable epoch number
             	// this should only happen once when moving to a
             	// new code version
             	currentEpoch = epochOfZxid;
-            	LOG.info(CURRENT_EPOCH_FILENAME
-            	        + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation",
-            	        currentEpoch);
+            	LOG.info(CURRENT_EPOCH_FILENAME + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation", currentEpoch);
             	writeLongToFile(CURRENT_EPOCH_FILENAME, currentEpoch);
             }
             if (epochOfZxid > currentEpoch) {
                 throw new IOException("The current epoch, " + ZxidUtils.zxidToString(currentEpoch) + ", is older than the last zxid, " + lastProcessedZxid);
             }
             try {
-                acceptedEpoch = readLongFromFile(ACCEPTED_EPOCH_FILENAME);
+                acceptedEpoch = readLongFromFile(ACCEPTED_EPOCH_FILENAME);       // read acceptedEpoch from file
             } catch(FileNotFoundException e) {
             	// pick a reasonable epoch number
             	// this should only happen once when moving to a
             	// new code version
             	acceptedEpoch = epochOfZxid;
-            	LOG.info(ACCEPTED_EPOCH_FILENAME
-            	        + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation",
-            	        acceptedEpoch);
+            	LOG.info(ACCEPTED_EPOCH_FILENAME + " not found! Creating with a reasonable default of {}. This should only happen when you are upgrading your installation", acceptedEpoch);
             	writeLongToFile(ACCEPTED_EPOCH_FILENAME, acceptedEpoch);
             }
+
             if (acceptedEpoch < currentEpoch) {
                 throw new IOException("The accepted epoch, " + ZxidUtils.zxidToString(acceptedEpoch) + " is less than the current epoch, " + ZxidUtils.zxidToString(currentEpoch));
             }
@@ -912,7 +882,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     synchronized public void startLeaderElection() {
        try {
            if (getPeerState() == ServerState.LOOKING) {
-               currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());
+               currentVote = new Vote(myid, getLastLoggedZxid(), getCurrentEpoch());  // 自己的id zxid事务相关 epoch周期
            }
        } catch(IOException e) {
            RuntimeException re = new RuntimeException(e.getMessage());
@@ -1778,6 +1748,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     public QuorumCnxManager getQuorumCnxManager() {
         return qcm;
     }
+
     private long readLongFromFile(String name) throws IOException {
         File file = new File(logFactory.getSnapDir(), name);
         BufferedReader br = new BufferedReader(new FileReader(file));

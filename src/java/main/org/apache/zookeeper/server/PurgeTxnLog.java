@@ -18,21 +18,17 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.util.*;
 
 /**
  * this class is used to clean up the 
@@ -87,18 +83,17 @@ public class PurgeTxnLog {
 
     // VisibleForTesting
     static void purgeOlderSnapshots(FileTxnSnapLog txnLog, File snapShot) {
-        final long leastZxidToBeRetain = Util.getZxidFromName(
-                snapShot.getName(), PREFIX_SNAPSHOT);
+        final long leastZxidToBeRetain = Util.getZxidFromName(snapShot.getName(), PREFIX_SNAPSHOT);
 
         /**
          * We delete all files with a zxid in their name that is less than leastZxidToBeRetain.
          * This rule applies to both snapshot files as well as log files, with the following
          * exception for log files.
          *
-         * A log file with zxid less than X may contain transactions with zxid larger than X.  More
-         * precisely, a log file named log.(X-a) may contain transactions newer than snapshot.X if
-         * there are no other log files with starting zxid in the interval (X-a, X].  Assuming the
-         * latter condition is true, log.(X-a) must be retained to ensure that snapshot.X is
+         * A log file with zxid less than X may contain transactions with zxid larger than X.  More       事务log日志     log.(X-a)
+         * precisely, a log file named log.(X-a) may contain transactions newer than snapshot.X if        snapshot       snapshot.X
+         * there are no other log files with starting zxid in the interval (X-a, X].  Assuming the        假如没有其余的zxid在(X-a, X]的日志文件
+         * latter condition is true, log.(X-a) must be retained to ensure that snapshot.X is              则 log.(X-a)日志文件包含最大的zxid可能会大于X的
          * recoverable.  In fact, this log file may very well extend beyond snapshot.X to newer
          * snapshot files if these newer snapshots were not accompanied by log rollover (possible in
          * the learner state machine at the time of this writing).  We can make more precise
@@ -122,19 +117,19 @@ public class PurgeTxnLog {
                 this.prefix=prefix;
             }
             public boolean accept(File f){
-                if(!f.getName().startsWith(prefix + "."))
+                if(!f.getName().startsWith(prefix + "."))    // 不是合法的文件名命名格式，不删除
                     return false;
-                if (retainedTxnLogs.contains(f)) {
+                if (retainedTxnLogs.contains(f)) {           // 如果f需要保留，不能删除
                     return false;
                 }
                 long fZxid = Util.getZxidFromName(f.getName(), prefix);
-                if (fZxid >= leastZxidToBeRetain) {
+                if (fZxid >= leastZxidToBeRetain) {          // 如果f的zxid >= leastZxidToBeRetain，需要保留
                     return false;
                 }
-                return true;
+                return true;     // 需要删除
             }
         }
-        // add all non-excluded log files
+        // add all non-excluded log files  得到所有该删除的文件名
         File[] logs = txnLog.getDataDir().listFiles(new MyFileFilter(PREFIX_LOG));
         List<File> files = new ArrayList<>();
         if (logs != null) {
@@ -148,11 +143,8 @@ public class PurgeTxnLog {
         }
 
         // remove the old files
-        for(File f: files)
-        {
-            final String msg = "Removing file: "+
-                DateFormat.getDateTimeInstance().format(f.lastModified())+
-                "\t"+f.getPath();
+        for(File f: files) {
+            final String msg = "Removing file: "+ DateFormat.getDateTimeInstance().format(f.lastModified())+ "\t"+f.getPath();
             LOG.info(msg);
             System.out.println(msg);
             if(!f.delete()){
@@ -199,8 +191,7 @@ public class PurgeTxnLog {
     private static File validateAndGetFile(String path) {
         File file = new File(path);
         if (!file.exists()) {
-            System.err.println("Path '" + file.getAbsolutePath()
-                    + "' does not exist. ");
+            System.err.println("Path '" + file.getAbsolutePath() + "' does not exist. ");
             printUsageThenExit();
         }
         return file;
@@ -222,8 +213,7 @@ public class PurgeTxnLog {
                 printUsageThenExit();
             }
         } catch (NumberFormatException e) {
-            System.err
-                    .println("'" + number + "' can not be parsed to integer.");
+            System.err.println("'" + number + "' can not be parsed to integer.");
             printUsageThenExit();
         }
         return result;

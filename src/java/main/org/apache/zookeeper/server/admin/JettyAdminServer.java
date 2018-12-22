@@ -18,26 +18,20 @@
 
 package org.apache.zookeeper.server.admin;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.apache.zookeeper.server.ZooKeeperServer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.zookeeper.server.ZooKeeperServer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * This class encapsulates a Jetty server for running Commands.
@@ -104,13 +98,9 @@ public class JettyAdminServer implements AdminServer {
         } catch (Exception e) {
             // Server.start() only throws Exception, so let's at least wrap it
             // in an identifiable subclass
-            throw new AdminServerException(String.format(
-                    "Problem starting AdminServer on address %s,"
-                            + " port %d and command URL %s", address, port,
-                    commandUrl), e);
+            throw new AdminServerException(String.format("Problem starting AdminServer on address %s," + " port %d and command URL %s", address, port, commandUrl), e);
         }
-        LOG.info(String.format("Started AdminServer on address %s, port %d"
-                + " and command URL %s", address, port, commandUrl));
+        LOG.info(String.format("Started AdminServer on address %s, port %d" + " and command URL %s", address, port, commandUrl));
     }
 
     /**
@@ -125,10 +115,7 @@ public class JettyAdminServer implements AdminServer {
         try {
             server.stop();
         } catch (Exception e) {
-            throw new AdminServerException(String.format(
-                    "Problem stopping AdminServer on address %s,"
-                            + " port %d and command URL %s", address, port, commandUrl),
-                    e);
+            throw new AdminServerException(String.format("Problem stopping AdminServer on address %s," + " port %d and command URL %s", address, port, commandUrl), e);
         }
     }
 

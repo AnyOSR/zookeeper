@@ -18,33 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.nio.channels.UnresolvedAddressException;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.zookeeper.server.ZooKeeperThread;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthLearner;
 import org.apache.zookeeper.server.quorum.auth.QuorumAuthServer;
@@ -52,22 +25,35 @@ import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.channels.UnresolvedAddressException;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
- * This class implements a connection manager for leader election using TCP. It
- * maintains one connection for every pair of servers. The tricky part is to
- * guarantee that there is exactly one connection for every pair of servers that
+ * This class implements a connection manager for leader election using TCP. It     利用tcp进行leader选举的连接管理器
+ * maintains one connection for every pair of servers. The tricky part is to        每两个server之间仅保持一个连接
+ * guarantee that there is exactly one connection for every pair of servers that    tricky part
  * are operating correctly and that can communicate over the network.
  * 
- * If two servers try to start a connection concurrently, then the connection
- * manager uses a very simple tie-breaking mechanism to decide which connection
+ * If two servers try to start a connection concurrently, then the connection        如果两个server并发的去创建连接，连接管理器会根据两个server的ip
+ * manager uses a very simple tie-breaking mechanism to decide which connection      来决定哪个连接会被丢弃
  * to drop based on the IP addressed of the two parties. 
  * 
- * For every peer, the manager maintains a queue of messages to send. If the
- * connection to any particular peer drops, then the sender thread puts the
- * message back on the list. As this implementation currently uses a queue
- * implementation to maintain messages to send to another peer, we add the
+ * For every peer, the manager maintains a queue of messages to send. If the         对于每一对server，连接管理器维护了一个待发送消息队列
+ * connection to any particular peer drops, then the sender thread puts the          如果这一个连接drop了，然后发送线程会将消息放回list
+ * message back on the list. As this implementation currently uses a queue           由于当前实现是用一个queue来保存待发送到另一端的消息
+ * implementation to maintain messages to send to another peer, we add the           将消息添加到队列的尾部，因此改变了消息的顺序
  * message to the tail of the queue, thus changing the order of messages.
- * Although this is not a problem for the leader election, it could be a problem
+ * Although this is not a problem for the leader election, it could be a problem     虽然对于leader选举不是一个问题，待验证
  * when consolidating peer communication. This is to be verified, though.
  * 
  */

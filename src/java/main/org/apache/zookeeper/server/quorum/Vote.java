@@ -84,13 +84,9 @@ public class Vote {
     }
 
     final private int version;
-
     final private long id;
-    
     final private long zxid;
-    
     final private long electionEpoch;
-    
     final private long peerEpoch;
     
     public int getVersion() {

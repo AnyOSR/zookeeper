@@ -1286,6 +1286,7 @@ public class DataTree {
     }
 
     public void setWatches(long relativeZxid, List<String> dataWatches, List<String> existWatches, List<String> childWatches, Watcher watcher) {
+
         for (String path : dataWatches) {
             DataNode node = getNode(path);
             WatchedEvent e = null;
@@ -1297,6 +1298,7 @@ public class DataTree {
                 this.dataWatches.addWatch(path, watcher);
             }
         }
+
         for (String path : existWatches) {
             DataNode node = getNode(path);
             if (node != null) {
@@ -1305,6 +1307,7 @@ public class DataTree {
                 this.dataWatches.addWatch(path, watcher);
             }
         }
+
         for (String path : childWatches) {
             DataNode node = getNode(path);
             if (node == null) {

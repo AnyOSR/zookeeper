@@ -18,10 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Iterator;
-
 import org.apache.jute.BinaryOutputArchive;
 import org.apache.jute.Record;
 import org.apache.zookeeper.server.persistence.TxnLog.TxnIterator;
@@ -32,6 +28,10 @@ import org.apache.zookeeper.txn.TxnHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Iterator;
+
 /**
  * This class provides an iterator interface to access Proposal deserialized
  * from on-disk txnlog. The iterator deserializes one proposal at a time
@@ -41,8 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class TxnLogProposalIterator implements Iterator<Proposal> {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(TxnLogProposalIterator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TxnLogProposalIterator.class);
 
     public static final TxnLogProposalIterator EMPTY_ITERATOR = new TxnLogProposalIterator();
 
@@ -74,8 +73,7 @@ public class TxnLogProposalIterator implements Iterator<Proposal> {
             }
             baos.close();
 
-            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader()
-                    .getZxid(), baos.toByteArray(), null);
+            QuorumPacket pp = new QuorumPacket(Leader.PROPOSAL, itr.getHeader().getZxid(), baos.toByteArray(), null);
             p.packet = pp;
             p.request = null;
 

@@ -18,19 +18,17 @@
 
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
-
 public class SyncedLearnerTracker {
 
-    protected ArrayList<QuorumVerifierAcksetPair> qvAcksetPairs = 
-                new ArrayList<QuorumVerifierAcksetPair>();
+    protected ArrayList<QuorumVerifierAcksetPair> qvAcksetPairs = new ArrayList<QuorumVerifierAcksetPair>();
 
     public void addQuorumVerifier(QuorumVerifier qv) {
-        qvAcksetPairs.add(new QuorumVerifierAcksetPair(qv,
-                new HashSet<Long>(qv.getVotingMembers().size())));
+        qvAcksetPairs.add(new QuorumVerifierAcksetPair(qv, new HashSet<Long>(qv.getVotingMembers().size())));
     }
 
     public boolean addAck(Long sid) {
@@ -63,7 +61,7 @@ public class SyncedLearnerTracker {
     }
 
     public static class QuorumVerifierAcksetPair {
-        private final QuorumVerifier qv;
+        private final QuorumVerifier qv;        // 含有当前集群视图
         private final HashSet<Long> ackset;
 
         public QuorumVerifierAcksetPair(QuorumVerifier qv, HashSet<Long> ackset) {                

@@ -18,9 +18,6 @@
 
 package org.apache.zookeeper.server;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import org.apache.jute.Record;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
@@ -28,6 +25,9 @@ import org.apache.zookeeper.common.Time;
 import org.apache.zookeeper.data.Id;
 import org.apache.zookeeper.server.quorum.flexible.QuorumVerifier;
 import org.apache.zookeeper.txn.TxnHeader;
+
+import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * This is the structure that represents a request moving through a chain of
@@ -59,29 +59,17 @@ public class Request {
     }
 
     public final long sessionId;
-
     public final int cxid;
-
     public final int type;
-
     public final ByteBuffer request;
-
     public final ServerCnxn cnxn;
-
     private TxnHeader hdr;
-
     private Record txn;
-
     public long zxid = -1;
-
     public final List<Id> authInfo;
-
     public final long createTime = Time.currentElapsedTime();
-
     private Object owner;
-
     private KeeperException e;
-
     public QuorumVerifier qv = null;
     
     /**

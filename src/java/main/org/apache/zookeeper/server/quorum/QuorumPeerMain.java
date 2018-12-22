@@ -152,12 +152,9 @@ public class QuorumPeerMain {
           }
 
           quorumPeer = getQuorumPeer();
-          quorumPeer.setTxnFactory(new FileTxnSnapLog(
-                      config.getDataLogDir(),
-                      config.getDataDir()));
+          quorumPeer.setTxnFactory(new FileTxnSnapLog(config.getDataLogDir(), config.getDataDir()));
           quorumPeer.enableLocalSessions(config.areLocalSessionsEnabled());
-          quorumPeer.enableLocalSessionsUpgrading(
-              config.isLocalSessionsUpgradingEnabled());
+          quorumPeer.enableLocalSessionsUpgrading(config.isLocalSessionsUpgradingEnabled());
           //quorumPeer.setQuorumPeers(config.getAllMembers());
           quorumPeer.setElectionType(config.getElectionAlg());
           quorumPeer.setMyid(config.getServerId());
