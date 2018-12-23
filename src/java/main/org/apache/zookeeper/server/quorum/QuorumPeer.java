@@ -1300,11 +1300,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     public synchronized Set<Long> getCurrentAndNextConfigVoters() {
-        Set<Long> voterIds = new HashSet<Long>(getQuorumVerifier()
-                .getVotingMembers().keySet());
+        Set<Long> voterIds = new HashSet<Long>(getQuorumVerifier().getVotingMembers().keySet());
         if (getLastSeenQuorumVerifier() != null) {
-            voterIds.addAll(getLastSeenQuorumVerifier().getVotingMembers()
-                    .keySet());
+            voterIds.addAll(getLastSeenQuorumVerifier().getVotingMembers().keySet());
         }
         return voterIds;
     }
@@ -1540,8 +1538,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             if ((quorumVerifier != null) && (quorumVerifier.getVersion() >= qv.getVersion())) {
                 // this is normal. For example - server found out about new config through FastLeaderElection gossiping
                 // and then got the same config in UPTODATE message so its already known
-                LOG.debug(getId() + " setQuorumVerifier called with known or old config " + qv.getVersion() +
-                        ". Current version: " + quorumVerifier.getVersion());
+                LOG.debug(getId() + " setQuorumVerifier called with known or old config " + qv.getVersion() + ". Current version: " + quorumVerifier.getVersion());
                 return quorumVerifier;
             }
             QuorumVerifier prevQV = quorumVerifier;
@@ -1553,13 +1550,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 // some tests initialize QuorumPeer without a static config file
                 if (configFilename != null) {
                     try {
-                        String dynamicConfigFilename = makeDynamicConfigFilename(
-                                qv.getVersion());
-                        QuorumPeerConfig.writeDynamicConfig(
-                                dynamicConfigFilename, qv, false);
-                        QuorumPeerConfig.editStaticConfig(configFilename,
-                                dynamicConfigFilename,
-                                needEraseClientInfoFromStaticConfig());
+                        String dynamicConfigFilename = makeDynamicConfigFilename(qv.getVersion());
+                        QuorumPeerConfig.writeDynamicConfig(dynamicConfigFilename, qv, false);
+                        QuorumPeerConfig.editStaticConfig(configFilename, dynamicConfigFilename, needEraseClientInfoFromStaticConfig());
                     } catch (IOException e) {
                         LOG.error("Error closing file: ", e.getMessage());
                     }
