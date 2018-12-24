@@ -925,11 +925,8 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * This constructor is only used by the existing unit test code.
      * It defaults to FileLogProvider persistence provider.
      */
-    public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
-            File logDir, int clientPort, int electionAlg,
-            long myid, int tickTime, int initLimit, int syncLimit)
-        throws IOException
-    {
+    public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, int electionAlg,
+            long myid, int tickTime, int initLimit, int syncLimit) throws IOException {
         this(quorumPeers, snapDir, logDir, electionAlg, myid, tickTime, initLimit, syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
                 new QuorumMaj(quorumPeers));
@@ -939,20 +936,15 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
      * This constructor is only used by the existing unit test code.
      * It defaults to FileLogProvider persistence provider.
      */
-    public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir,
-            File logDir, int clientPort, int electionAlg,
-            long myid, int tickTime, int initLimit, int syncLimit,
-            QuorumVerifier quorumConfig)
-        throws IOException
-    {
+    public QuorumPeer(Map<Long,QuorumServer> quorumPeers, File snapDir, File logDir, int clientPort, int electionAlg,
+            long myid, int tickTime, int initLimit, int syncLimit, QuorumVerifier quorumConfig) throws IOException {
         this(quorumPeers, snapDir, logDir, electionAlg,
                 myid,tickTime, initLimit,syncLimit, false,
                 ServerCnxnFactory.createFactory(getClientAddress(quorumPeers, myid, clientPort), -1),
                 quorumConfig);
     }
 
-    private static InetSocketAddress getClientAddress(Map<Long, QuorumServer> quorumPeers, long myid, int clientPort)
-            throws IOException {
+    private static InetSocketAddress getClientAddress(Map<Long, QuorumServer> quorumPeers, long myid, int clientPort) throws IOException {
         QuorumServer quorumServer = quorumPeers.get(myid);
         if (null == quorumServer) {
             throw new IOException("No QuorumServer correspoding to myid " + myid);
@@ -961,8 +953,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             return new InetSocketAddress(clientPort);
         }
         if (quorumServer.clientAddr.getPort() != clientPort) {
-            throw new IOException("QuorumServer port " + quorumServer.clientAddr.getPort()
-                    + " does not match with given port " + clientPort);
+            throw new IOException("QuorumServer port " + quorumServer.clientAddr.getPort() + " does not match with given port " + clientPort);
         }
         return quorumServer.clientAddr;
     }
@@ -1107,8 +1098,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                         LOG.info("Attempting to start ReadOnlyZooKeeperServer");
 
                         // Create read-only server but don't start it immediately
-                        final ReadOnlyZooKeeperServer roZk =
-                            new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
+                        final ReadOnlyZooKeeperServer roZk = new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
     
                         // Instead of starting roZk immediately, wait some grace
                         // period before we decide we're partitioned.
@@ -1957,8 +1947,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private void updateThreadName() {
-        String plain = cnxnFactory != null ?
-                cnxnFactory.getLocalAddress() != null ?
+        String plain = cnxnFactory != null ? cnxnFactory.getLocalAddress() != null ?
                         cnxnFactory.getLocalAddress().toString() : "disabled" : "disabled";
         String secure = secureCnxnFactory != null ? secureCnxnFactory.getLocalAddress().toString() : "disabled";
         setName(String.format("QuorumPeer[myid=%d](plain=%s)(secure=%s)", getId(), plain, secure));

@@ -231,13 +231,13 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
      */
     public void loadData() throws IOException, InterruptedException {
         /*
-         * When a new leader starts executing Leader#lead, it 
-         * invokes this method. The database, however, has been
-         * initialized before running leader election so that
+         * When a new leader starts executing Leader#lead, it         当一个新leader开始执行leader.lead时，调用这个方法
+         * invokes this method. The database, however, has been       数据库，在leader选举之前已经初始化好了
+         * initialized before running leader election so that        因此，server选择它的zxid作为初始vote
          * the server could pick its zxid for its initial vote.
-         * It does it by invoking QuorumPeer#getLastLoggedZxid.
-         * Consequently, we don't need to initialize it once more
-         * and avoid the penalty of loading it a second time. Not 
+         * It does it by invoking QuorumPeer#getLastLoggedZxid.      通过调用getLastLoggedZxid。。。
+         * Consequently, we don't need to initialize it once more    不用加载第二次
+         * and avoid the penalty of loading it a second time. Not     对一个很大数据库的应用来说，很重要
          * reloading it is particularly important for applications
          * that host a large database.
          * 
@@ -364,7 +364,6 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
 
     public static class MissingSessionException extends IOException {
         private static final long serialVersionUID = 7467414635467261007L;
-
         public MissingSessionException(String msg) {
             super(msg);
         }

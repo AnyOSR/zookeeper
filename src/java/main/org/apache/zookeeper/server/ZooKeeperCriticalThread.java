@@ -25,8 +25,7 @@ import org.slf4j.LoggerFactory;
  * thread this will exit the system.
  */
 public class ZooKeeperCriticalThread extends ZooKeeperThread {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(ZooKeeperCriticalThread.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperCriticalThread.class);
     private final ZooKeeperServerListener listener;
 
     public ZooKeeperCriticalThread(String threadName, ZooKeeperServerListener listener) {
