@@ -18,38 +18,36 @@
 
 package org.apache.zookeeper.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Flushable;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
- * This RequestProcessor logs requests to disk. It batches the requests to do
- * the io efficiently. The request is not passed to the next RequestProcessor
- * until its log has been synced to disk.
+ * This RequestProcessor logs requests to disk. It batches the requests to do       将请求 log到disk上
+ * the io efficiently. The request is not passed to the next RequestProcessor       批处理 io效率
+ * until its log has been synced to disk.                                           请求在同步到disk之前不会被传递到下一个processor
  *
  * SyncRequestProcessor is used in 3 different cases
- * 1. Leader - Sync request to disk and forward it to AckRequestProcessor which
+ * 1. Leader - Sync request to disk and forward it to AckRequestProcessor which      leader：同步请求到disk，forward到AckRequestProcessor(发送ack给自己)
  *             send ack back to itself.
- * 2. Follower - Sync request to disk and forward request to
+ * 2. Follower - Sync request to disk and forward request to                         follower：同步请求到硬盘，forward请求到SendAckRequestProcessor(发送packet给leader)
  *             SendAckRequestProcessor which send the packets to leader.
  *             SendAckRequestProcessor is flushable which allow us to force
  *             push packets to leader.
- * 3. Observer - Sync committed request to disk (received as INFORM packet).
- *             It never send ack back to the leader, so the nextProcessor will
- *             be null. This change the semantic of txnlog on the observer
+ * 3. Observer - Sync committed request to disk (received as INFORM packet).         observer：同步commited请求到disk
+ *             It never send ack back to the leader, so the nextProcessor will                 不发送ack给leader，因此nextProcessor为null
+ *             be null. This change the semantic of txnlog on the observer                     这改变了observer的 事务日志机制，只包含提交日志
  *             since it only contains committed txns.
  */
-public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
-        RequestProcessor {
+public class SyncRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
     private final ZooKeeperServer zks;
-    private final LinkedBlockingQueue<Request> queuedRequests =
-        new LinkedBlockingQueue<Request>();
+    private final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
     private final RequestProcessor nextProcessor;
 
     private Thread snapInProcess = null;
@@ -69,10 +67,8 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements
 
     private final Request requestOfDeath = Request.requestOfDeath;
 
-    public SyncRequestProcessor(ZooKeeperServer zks,
-            RequestProcessor nextProcessor) {
-        super("SyncThread:" + zks.getServerId(), zks
-                .getZooKeeperServerListener());
+    public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
+        super("SyncThread:" + zks.getServerId(), zks.getZooKeeperServerListener());
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         running = true;
