@@ -18,13 +18,12 @@
 
 package org.apache.zookeeper.server;
 
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.SessionExpiredException;
+
 import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.KeeperException.SessionExpiredException;
-import org.apache.zookeeper.KeeperException.SessionMovedException;
 
 /**
  * This is the basic interface that ZooKeeperServer uses to track sessions. The
@@ -104,10 +103,7 @@ public interface SessionTracker {
      * @param sessionId
      * @param owner
      */
-    public void checkSession(long sessionId, Object owner)
-            throws KeeperException.SessionExpiredException,
-            KeeperException.SessionMovedException,
-            KeeperException.UnknownSessionException;
+    public void checkSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException, KeeperException.UnknownSessionException;
 
     /**
      * Strictly check that a given session is a global session or not
@@ -116,9 +112,7 @@ public interface SessionTracker {
      * @throws KeeperException.SessionExpiredException
      * @throws KeeperException.SessionMovedException
      */
-    public void checkGlobalSession(long sessionId, Object owner)
-            throws KeeperException.SessionExpiredException,
-            KeeperException.SessionMovedException;
+    public void checkGlobalSession(long sessionId, Object owner) throws KeeperException.SessionExpiredException, KeeperException.SessionMovedException;
 
     void setOwner(long id, Object owner) throws SessionExpiredException;
 

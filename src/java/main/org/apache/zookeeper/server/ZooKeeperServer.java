@@ -422,6 +422,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         notifyAll();
     }
 
+    // PrepRequestProcessor SyncRequestProcessor FinalRequestProcessor
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor syncProcessor = new SyncRequestProcessor(this, finalProcessor);
@@ -606,6 +607,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
     }
 
+    // seed是定的，知道了种子，也就知道第一次调用next产生的密码
     byte[] generatePasswd(long id) {
         Random r = new Random(id ^ superSecret);
         byte p[] = new byte[16];
@@ -613,6 +615,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return p;
     }
 
+    // 检验密码是否正确
     protected boolean checkPasswd(long sessionId, byte[] passwd) {
         return sessionId != 0 && Arrays.equals(passwd, generatePasswd(sessionId));
     }
@@ -624,9 +627,9 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
         long sessionId = sessionTracker.createSession(timeout);
         Random r = new Random(sessionId ^ superSecret);
-        r.nextBytes(passwd);
+        r.nextBytes(passwd);                          // 填充密码  被丢弃了？
         ByteBuffer to = ByteBuffer.allocate(4);
-        to.putInt(timeout);
+        to.putInt(timeout);                           // 超时时间
         cnxn.setSessionId(sessionId);
         Request si = new Request(cnxn, sessionId, 0, OpCode.createSession, to, null);
         setLocalSessionFlag(si);
@@ -676,28 +679,26 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         }
 
         try {
-            ConnectResponse rsp = new ConnectResponse(0, valid ? cnxn.getSessionTimeout()
-                    : 0, valid ? cnxn.getSessionId() : 0, // send 0 if session is no
-                            // longer valid
-                            valid ? generatePasswd(cnxn.getSessionId()) : new byte[16]);
+            ConnectResponse rsp = new ConnectResponse(0,
+                    valid ? cnxn.getSessionTimeout() : 0,
+                    valid ? cnxn.getSessionId() : 0,
+                    valid ? generatePasswd(cnxn.getSessionId()) : new byte[16]);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             BinaryOutputArchive bos = BinaryOutputArchive.getArchive(baos);
-            bos.writeInt(-1, "len");
-            rsp.serialize(bos, "connect");
+            bos.writeInt(-1, "len");                        // 写了一个int
+            rsp.serialize(bos, "connect");                    // 将rsp序列化到bos中
             if (!cnxn.isOldClient) {
                 bos.writeBool(this instanceof ReadOnlyZooKeeperServer, "readOnly");
             }
-            baos.close();
-            ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());
+            baos.close();    // 这个没有效果的啊？
+            ByteBuffer bb = ByteBuffer.wrap(baos.toByteArray());   // 得到序列化后的字节流
             bb.putInt(bb.remaining() - 4).rewind();
             cnxn.sendBuffer(bb);
 
             if (valid) {
-                LOG.info("Established session 0x" + Long.toHexString(cnxn.getSessionId())
-                        + " with negotiated timeout " + cnxn.getSessionTimeout() + " for client " + cnxn.getRemoteSocketAddress());
+                LOG.info("Established session 0x" + Long.toHexString(cnxn.getSessionId()) + " with negotiated timeout " + cnxn.getSessionTimeout() + " for client " + cnxn.getRemoteSocketAddress());
                 cnxn.enableRecv();
             } else {
-
                 LOG.info("Invalid session 0x" + Long.toHexString(cnxn.getSessionId()) + " for client " + cnxn.getRemoteSocketAddress() + ", probably expired");
                 cnxn.sendBuffer(ServerCnxnFactory.closeConn);
             }

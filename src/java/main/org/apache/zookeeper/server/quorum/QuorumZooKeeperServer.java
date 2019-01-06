@@ -17,10 +17,6 @@
  */
 package org.apache.zookeeper.server.quorum;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.ByteBuffer;
-
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.MultiTransactionRecord;
@@ -33,6 +29,10 @@ import org.apache.zookeeper.server.ZKDatabase;
 import org.apache.zookeeper.server.ZooKeeperServer;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.ByteBuffer;
+
 /**
  * Abstract base class for all ZooKeeperServers that participate in
  * a quorum.
@@ -42,10 +42,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     public final QuorumPeer self;
     protected UpgradeableSessionTracker upgradeableSessionTracker;
 
-    protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout,
-            ZKDatabase zkDb, QuorumPeer self)
-    {
+    protected QuorumZooKeeperServer(FileTxnSnapLog logFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb, QuorumPeer self) {
         super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb);
         this.self = self;
     }
@@ -56,8 +53,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         upgradeableSessionTracker.start();
     }
 
-    public Request checkUpgradeSession(Request request)
-            throws IOException, KeeperException {
+    public Request checkUpgradeSession(Request request) throws IOException, KeeperException {
         // If this is a request for a local session and it is to
         // create an ephemeral node, then upgrade the session and return
         // a new session request for the leader.
