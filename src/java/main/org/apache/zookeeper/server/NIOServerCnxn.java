@@ -379,13 +379,13 @@ public class NIOServerCnxn extends ServerCnxn {
 
     // returns whether we are interested in taking new requests, which is
     // determined by whether we are currently throttled or not
-    // 不进行流量控制，则对读感兴趣
+    // 不进行流量控制，对读感兴趣
     private boolean getReadInterest() {
         return !throttled.get();
     }
 
-    // false 表示不进行流量控制
-    // true表示进行流量控制
+    // false 表示不进行流量控制 对读感兴趣
+    // true 表示进行流量控制    不对读感兴趣
     private final AtomicBoolean throttled = new AtomicBoolean(false);
 
     // Throttle acceptance of new requests. If this entailed a state change,

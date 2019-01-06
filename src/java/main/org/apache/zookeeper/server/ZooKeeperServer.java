@@ -747,8 +747,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
         }
         try {
-            touch(si.cnxn);
-            boolean validpacket = Request.isValid(si.type);
+            touch(si.cnxn);                                          // 更新session信息
+            boolean validpacket = Request.isValid(si.type);          // 校验是否correct code
             if (validpacket) {
                 firstProcessor.processRequest(si);
                 if (si.cnxn != null) {
@@ -926,7 +926,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
     }
 
     public void processConnectRequest(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
-        BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));
+        BinaryInputArchive bia = BinaryInputArchive.getArchive(new ByteBufferInputStream(incomingBuffer));     // 反序列化
         ConnectRequest connReq = new ConnectRequest();
         connReq.deserialize(bia, "connect");
         if (LOG.isDebugEnabled()) {
@@ -994,6 +994,8 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         return false;
     }
 
+    //incomingBuffer 是不包含字节length的所有内容
+    //并且是一个完整的包
     public void processPacket(ServerCnxn cnxn, ByteBuffer incomingBuffer) throws IOException {
         // We have the request, now process and setup for next
         InputStream bais = new ByteBufferInputStream(incomingBuffer);
@@ -1004,7 +1006,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         // pointing
         // to the start of the txn
         incomingBuffer = incomingBuffer.slice();
-        if (h.getType() == OpCode.auth) {
+        if (h.getType() == OpCode.auth) {                      // 认证
             LOG.info("got auth packet " + cnxn.getRemoteSocketAddress());
             AuthPacket authPacket = new AuthPacket();
             ByteBufferInputStream.byteBuffer2Record(incomingBuffer, authPacket);
@@ -1040,7 +1042,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 cnxn.disableRecv();
             }
             return;
-        } else if (h.getType() == OpCode.sasl) {
+        } else if (h.getType() == OpCode.sasl) {   // sasl
             Record rsp = processSasl(incomingBuffer,cnxn);
             ReplyHeader rh = new ReplyHeader(h.getXid(), 0, KeeperException.Code.OK.intValue());
             cnxn.sendResponse(rh,rsp, "response"); // not sure about 3rd arg..what is it?
@@ -1083,9 +1085,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
             }
             catch (SaslException e) {
                 LOG.warn("Client failed to SASL authenticate: " + e, e);
-                if ((System.getProperty("zookeeper.allowSaslFailedClients") != null)
-                  &&
-                  (System.getProperty("zookeeper.allowSaslFailedClients").equals("true"))) {
+                if ((System.getProperty("zookeeper.allowSaslFailedClients") != null) && (System.getProperty("zookeeper.allowSaslFailedClients").equals("true"))) {
                     LOG.warn("Maintaining client connection despite SASL authentication failure.");
                 } else {
                     LOG.warn("Closing client connection due to SASL authentication failure.");
@@ -1119,7 +1119,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
         long sessionId = request != null ? request.sessionId : hdr.getClientId();
         if (hdr != null) {
             rc = getZKDatabase().processTxn(hdr, txn);
-        } else {
+        } else {  // 什么场景下，hdr会为null？
             rc = new ProcessTxnResult();
         }
         if (opCode == OpCode.createSession) {

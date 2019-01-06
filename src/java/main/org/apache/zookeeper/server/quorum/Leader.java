@@ -145,8 +145,7 @@ public class Leader {
     }
 
     // Pending sync requests. Must access under 'this' lock.
-    private final HashMap<Long,List<LearnerSyncRequest>> pendingSyncs =
-        new HashMap<Long,List<LearnerSyncRequest>>();
+    private final HashMap<Long,List<LearnerSyncRequest>> pendingSyncs = new HashMap<Long,List<LearnerSyncRequest>>();
 
     synchronized public int getNumPendingSyncs() {
         return pendingSyncs.size();

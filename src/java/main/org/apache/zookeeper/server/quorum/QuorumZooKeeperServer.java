@@ -54,10 +54,10 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     }
 
     public Request checkUpgradeSession(Request request) throws IOException, KeeperException {
-        // If this is a request for a local session and it is to
-        // create an ephemeral node, then upgrade the session and return
+        // If this is a request for a local session and it is to               for leader，如果这是一个local session的请求，并且创建一个临时节点，
+        // create an ephemeral node, then upgrade the session and return         upgrade
         // a new session request for the leader.
-        // This is called by the request processor thread (either follower
+        // This is called by the request processor thread (either follower    不会并发调用
         // or observer request processor), which is unique to a learner.
         // So will not be called concurrently by two threads.
         if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi) ||
@@ -104,16 +104,15 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
     }
 
     private Request makeUpgradeRequest(long sessionId) {
-        // Make sure to atomically check local session status, upgrade
-        // session, and make the session creation request.  This is to
+        // Make sure to atomically check local session status, upgrade         确保原子的
+        // session, and make the session creation request.  This is to         检查session status，upgrade session ，make session
         // avoid another thread upgrading the session in parallel.
         synchronized (upgradeableSessionTracker) {
             if (upgradeableSessionTracker.isLocalSession(sessionId)) {
                 int timeout = upgradeableSessionTracker.upgradeSession(sessionId);
                 ByteBuffer to = ByteBuffer.allocate(4);
                 to.putInt(timeout);
-                return new Request(
-                        null, sessionId, 0, OpCode.createSession, to, null);
+                return new Request(null, sessionId, 0, OpCode.createSession, to, null);
             }
         }
         return null;
