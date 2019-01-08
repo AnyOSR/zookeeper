@@ -18,8 +18,6 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.IOException;
-
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.OpCode;
 import org.apache.zookeeper.server.Request;
@@ -28,27 +26,27 @@ import org.apache.zookeeper.txn.ErrorTxn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 /**
- * Responsible for performing local session upgrade. Only request submitted
+ * Responsible for performing local session upgrade. Only request submitted   localSession升级
  * directly to the leader should go through this processor.
  */
 public class LeaderRequestProcessor implements RequestProcessor {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(LeaderRequestProcessor.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(LeaderRequestProcessor.class);
 
     private final LeaderZooKeeperServer lzks;
 
     private final RequestProcessor nextProcessor;
 
-    public LeaderRequestProcessor(LeaderZooKeeperServer zks,
-            RequestProcessor nextProcessor) {
+    public LeaderRequestProcessor(LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
         this.lzks = zks;
         this.nextProcessor = nextProcessor;
     }
 
     @Override
-    public void processRequest(Request request)
-            throws RequestProcessorException {
+    public void processRequest(Request request) throws RequestProcessorException {
         // Check if this is a local session and we are trying to create
         // an ephemeral node, in which case we upgrade the session
         Request upgradeRequest = null;

@@ -29,11 +29,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Manages cleanup of container ZNodes. This class is meant to only
+ * Manages cleanup of container ZNodes. This class is meant to only                        清理 container Znode
  * be run from the leader. There's no harm in running from followers/observers
  * but that will be extra work that's not needed. Once started, it periodically
- * checks container nodes that have a cversion > 0 and have no children. A
- * delete is attempted on the node. The result of the delete is unimportant.
+ * checks container nodes that have a cversion > 0 and have no children. A                  周期检查 container节点，cversion>0 且没有孩子
+ * delete is attempted on the node. The result of the delete is unimportant.                a delete attemp on that node
  * If the proposal fails or the container node is not empty there's no harm.
  */
 public class ContainerManager {
@@ -53,16 +53,14 @@ public class ContainerManager {
      * @param maxPerMinute the max containers to delete per second - avoids
      *                     herding of container deletions
      */
-    public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor,
-                            int checkIntervalMs, int maxPerMinute) {
+    public ContainerManager(ZKDatabase zkDb, RequestProcessor requestProcessor, int checkIntervalMs, int maxPerMinute) {
         this.zkDb = zkDb;
         this.requestProcessor = requestProcessor;
         this.checkIntervalMs = checkIntervalMs;
         this.maxPerMinute = maxPerMinute;
         timer = new Timer("ContainerManagerTask", true);
 
-        LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d",
-                checkIntervalMs, maxPerMinute));
+        LOG.info(String.format("Using checkIntervalMs=%d maxPerMinute=%d", checkIntervalMs, maxPerMinute));
     }
 
     /**
@@ -86,8 +84,7 @@ public class ContainerManager {
                 }
             };
             if (task.compareAndSet(null, timerTask)) {
-                timer.scheduleAtFixedRate(timerTask, checkIntervalMs,
-                        checkIntervalMs);
+                timer.scheduleAtFixedRate(timerTask, checkIntervalMs, checkIntervalMs);
             }
         }
     }
@@ -106,22 +103,18 @@ public class ContainerManager {
     /**
      * Manually check the containers. Not normally used directly
      */
-    public void checkContainers()
-            throws InterruptedException {
+    public void checkContainers() throws InterruptedException {
         long minIntervalMs = getMinIntervalMs();
         for (String containerPath : getCandidates()) {
             long startMs = Time.currentElapsedTime();
 
             ByteBuffer path = ByteBuffer.wrap(containerPath.getBytes());
-            Request request = new Request(null, 0, 0,
-                    ZooDefs.OpCode.deleteContainer, path, null);
+            Request request = new Request(null, 0, 0, ZooDefs.OpCode.deleteContainer, path, null);
             try {
-                LOG.info("Attempting to delete candidate container: {}",
-                        containerPath);
+                LOG.info("Attempting to delete candidate container: {}", containerPath);
                 requestProcessor.processRequest(request);
             } catch (Exception e) {
-                LOG.error("Could not delete container: {}",
-                        containerPath, e);
+                LOG.error("Could not delete container: {}", containerPath, e);
             }
 
             long elapsedMs = Time.currentElapsedTime() - startMs;
@@ -143,13 +136,12 @@ public class ContainerManager {
         for (String containerPath : zkDb.getDataTree().getContainers()) {
             DataNode node = zkDb.getDataTree().getNode(containerPath);
             /*
-                cversion > 0: keep newly created containers from being deleted
+                cversion > 0: keep newly created containers from being deleted    cversion > 0:阻止刚创建的container节点被删除
                 before any children have been added. If you were to create the
                 container just before a container cleaning period the container
                 would be immediately be deleted.
              */
-            if ((node != null) && (node.stat.getCversion() > 0) &&
-                    (node.getChildren().size() == 0)) {
+            if ((node != null) && (node.stat.getCversion() > 0) && (node.getChildren().size() == 0)) {
                 candidates.add(containerPath);
             }
         }

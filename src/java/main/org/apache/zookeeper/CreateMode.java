@@ -28,23 +28,23 @@ import org.slf4j.LoggerFactory;
 public enum CreateMode {
     
     /**
-     * The znode will not be automatically deleted upon client's disconnect.
+     * The znode will not be automatically deleted upon client's disconnect.                  // 持久化节点
      */
     PERSISTENT (0, false, false, false, false),
     /**
-    * The znode will not be automatically deleted upon client's disconnect,
+    * The znode will not be automatically deleted upon client's disconnect,                   // 持久化 自增数字
     * and its name will be appended with a monotonically increasing number.
     */
     PERSISTENT_SEQUENTIAL (2, false, true, false, false),
     /**
      * The znode will be deleted upon the client's disconnect.
      */
-    EPHEMERAL (1, true, false, false, false),
+    EPHEMERAL (1, true, false, false, false),        // 临时节点
     /**
      * The znode will be deleted upon the client's disconnect, and its name
      * will be appended with a monotonically increasing number.
      */
-    EPHEMERAL_SEQUENTIAL (3, true, true, false, false),
+    EPHEMERAL_SEQUENTIAL (3, true, true, false, false),  // 临时节点，自增数字
     /**
      * The znode will be a container node. Container                                             // container节点
      * nodes are special purpose nodes useful for recipes such as leader, lock,                  // 当container的最后一个孩子被删除时，container会在之后的某个点被server删除
@@ -56,7 +56,7 @@ public enum CreateMode {
      */
     CONTAINER (4, false, false, true, false),
     /**
-     * The znode will not be automatically deleted upon client's disconnect.
+     * The znode will not be automatically deleted upon client's disconnect.            // 持久化 ttl内无修改，且无children，则删除
      * However if the znode has not been modified within the given TTL, it
      * will be deleted once it has no children.
      */

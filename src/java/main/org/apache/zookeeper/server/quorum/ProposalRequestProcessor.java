@@ -26,12 +26,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This RequestProcessor simply forwards requests to an AckRequestProcessor and
+ * This RequestProcessor simply forwards requests to an AckRequestProcessor and          转发到AckRequestProcessor和SyncRequestProcessor
  * SyncRequestProcessor.
  */
 public class ProposalRequestProcessor implements RequestProcessor {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(ProposalRequestProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProposalRequestProcessor.class);
 
     LeaderZooKeeperServer zks;
 
@@ -39,8 +38,7 @@ public class ProposalRequestProcessor implements RequestProcessor {
 
     SyncRequestProcessor syncProcessor;
 
-    public ProposalRequestProcessor(LeaderZooKeeperServer zks,
-            RequestProcessor nextProcessor) {
+    public ProposalRequestProcessor(LeaderZooKeeperServer zks, RequestProcessor nextProcessor) {
         this.zks = zks;
         this.nextProcessor = nextProcessor;
         AckRequestProcessor ackProcessor = new AckRequestProcessor(zks.getLeader());

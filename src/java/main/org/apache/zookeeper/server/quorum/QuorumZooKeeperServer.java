@@ -60,11 +60,12 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
         // This is called by the request processor thread (either follower    不会并发调用
         // or observer request processor), which is unique to a learner.
         // So will not be called concurrently by two threads.
-        if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi) ||
-            !upgradeableSessionTracker.isLocalSession(request.sessionId)) {
+        if ((request.type != OpCode.create && request.type != OpCode.create2 && request.type != OpCode.multi) ||      // create请求，multi请求
+            !upgradeableSessionTracker.isLocalSession(request.sessionId)) {                                           // sessionId已经不是localSession
             return null;
         }
 
+        //如果是multi，检查是否有create create2 以及是否临时节点
         if (OpCode.multi == request.type) {
             MultiTransactionRecord multiTransactionRecord = new MultiTransactionRecord();
             request.request.rewind();
@@ -149,8 +150,7 @@ public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
                 si.setLocalSession(true);
                 reqType = "local";
             }
-            LOG.info("Submitting " + reqType + " closeSession request"
-                    + " for session 0x" + Long.toHexString(si.sessionId));
+            LOG.info("Submitting " + reqType + " closeSession request" + " for session 0x" + Long.toHexString(si.sessionId));
             break;
         default:
             break;

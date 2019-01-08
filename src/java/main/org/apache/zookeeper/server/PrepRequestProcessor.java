@@ -82,13 +82,14 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * This request processor is generally at the start of a RequestProcessor
- * change. It sets up any transactions associated with requests that change the
- * state of the system. It counts on ZooKeeperServer to update
+ * This request processor is generally at the start of a RequestProcessor                  通常位于RequestProcessor change的开始位置
+ * change. It sets up any transactions associated with requests that change the            将各种事务和request关联
+ * state of the system. It counts on ZooKeeperServer to update                             依靠ZooKeeperServer来更新outstandingRequests，
  * outstandingRequests, so that it can take into account transactions that are
  * in the queue to be applied when generating a transaction.
  */
 public class PrepRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
+
     private static final Logger LOG = LoggerFactory.getLogger(PrepRequestProcessor.class);
 
     static boolean skipACL;
@@ -163,8 +164,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     synchronized(n) {
                         children = n.getChildren();
                     }
-                    lastChange = new ChangeRecord(-1, path, n.stat, children.size(),
-                            zks.getZKDatabase().aclForNode(n));
+                    lastChange = new ChangeRecord(-1, path, n.stat, children.size(), zks.getZKDatabase().aclForNode(n));
                 }
             }
         }
@@ -218,7 +218,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
              * for a subsequent request.
              */
             int lastSlash = path.lastIndexOf('/');
-            if (lastSlash == -1 || path.indexOf('\0') != -1) {
+            if (lastSlash == -1 || path.indexOf('\0') != -1) {   //  '/'  结尾标识符
                 continue;
             }
             String parentPath = path.substring(0, lastSlash);
@@ -234,18 +234,18 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     /**
      * Rollback pending changes records from a failed multi-op.
      *
-     * If a multi-op fails, we can't leave any invalid change records we created
-     * around. We also need to restore their prior value (if any) if their prior
+     * If a multi-op fails, we can't leave any invalid change records we created        将zxid的数据移除，将pendingChangeRecords中changeRecord.zxid大于outstandingChanges.get(0).zxid
+     * around. We also need to restore their prior value (if any) if their prior        的数据加入到outstandingChangesForPath中
      * value is still valid.
      *
      * @param zxid
      * @param pendingChangeRecords
      */
-    void rollbackPendingChanges(long zxid, Map<String, ChangeRecord>pendingChangeRecords) {
+    void rollbackPendingChanges(long zxid, Map<String, ChangeRecord> pendingChangeRecords) {
         synchronized (zks.outstandingChanges) {
             // Grab a list iterator starting at the END of the list so we can iterate in reverse
             ListIterator<ChangeRecord> iter = zks.outstandingChanges.listIterator(zks.outstandingChanges.size());
-            while (iter.hasPrevious()) {
+            while (iter.hasPrevious()) {             // remove 掉outstandingChanges里面zxid为入参的changeRecord
                 ChangeRecord c = iter.previous();
                 if (c.zxid == zxid) {
                     iter.remove();
@@ -262,9 +262,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 return;
             }
 
-            long firstZxid = zks.outstandingChanges.get(0).zxid;
+            long firstZxid = zks.outstandingChanges.get(0).zxid;            // 拿到第一个的zxid
 
-            for (ChangeRecord c : pendingChangeRecords.values()) {
+            for (ChangeRecord c : pendingChangeRecords.values()) {          // 将pendingChangeRecords中，zxid大于等于第一个changeRecord zxid的加入到outstandingChangesForPath中
                 // Don't apply any prior change records less than firstZxid.
                 // Note that previous outstanding requests might have been removed
                 // once they are completed.
@@ -286,8 +286,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * @param perm: the permission that the client is requesting
      * @param ids:  the credentials supplied by the client
      */
-    static void checkACL(ZooKeeperServer zks, List<ACL> acl, int perm,
-            List<Id> ids) throws KeeperException.NoAuthException {
+    static void checkACL(ZooKeeperServer zks, List<ACL> acl, int perm, List<Id> ids) throws KeeperException.NoAuthException {
         if (skipACL) {
             return;
         }
@@ -300,23 +299,20 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             return;
         }
         for (Id authId : ids) {
-            if (authId.getScheme().equals("super")) {
+            if (authId.getScheme().equals("super")) {     // 如果 用户拥有super权限
                 return;
             }
         }
-        for (ACL a : acl) {
-            Id id = a.getId();
-            if ((a.getPerms() & perm) != 0) {
-                if (id.getScheme().equals("world")
-                        && id.getId().equals("anyone")) {
+        for (ACL a : acl) {   // 遍历node ACL
+            Id id = a.getId();  // ACL 角色
+            if ((a.getPerms() & perm) != 0) {   // acl权限
+                if (id.getScheme().equals("world") && id.getId().equals("anyone")) {    // 如果该节点拥有world anyone
                     return;
                 }
-                AuthenticationProvider ap = ProviderRegistry.getProvider(id
-                        .getScheme());
+                AuthenticationProvider ap = ProviderRegistry.getProvider(id.getScheme());   // 否则
                 if (ap != null) {
-                    for (Id authId : ids) {
-                        if (authId.getScheme().equals(id.getScheme())
-                                && ap.matches(authId.getId(), id.getId())) {
+                    for (Id authId : ids) {      // 遍历用户
+                        if (authId.getScheme().equals(id.getScheme()) && ap.matches(authId.getId(), id.getId())) {
                             return;
                         }
                     }
@@ -331,15 +327,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * Throws if the path is not valid and returns the parent path.
      * @throws BadArgumentsException
      */
-    private String validatePathForCreate(String path, long sessionId)
-            throws BadArgumentsException {
+    private String validatePathForCreate(String path, long sessionId) throws BadArgumentsException {
         int lastSlash = path.lastIndexOf('/');
-        if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {
-            LOG.info("Invalid path %s with session 0x%s",
-                    path, Long.toHexString(sessionId));
+        if (lastSlash == -1 || path.indexOf('\0') != -1 || failCreate) {      // 必须要有/，以及end标志串
+            LOG.info("Invalid path %s with session 0x%s", path, Long.toHexString(sessionId));
             throw new KeeperException.BadArgumentsException(path);
         }
-        return path.substring(0, lastSlash);
+        return path.substring(0, lastSlash);                                   // 返回parent path
     }
 
     /**
@@ -351,12 +345,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * @param request
      * @param record
      */
-    protected void pRequest2Txn(int type, long zxid, Request request,
-                                Record record, boolean deserialize)
-        throws KeeperException, IOException, RequestProcessorException
-    {
-        request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
-                Time.currentWallTime(), type));
+    protected void pRequest2Txn(int type, long zxid, Request request, Record record, boolean deserialize) throws KeeperException, IOException, RequestProcessorException {
+        request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid, Time.currentWallTime(), type));
 
         switch (type) {
             case OpCode.create:
@@ -446,8 +436,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 long configId = reconfigRequest.getCurConfigId();
   
                 if (configId != -1 && configId!=lzks.self.getLastSeenQuorumVerifier().getVersion()){
-                   String msg = "Reconfiguration from version " + configId + " failed -- last seen version is " +
-                           lzks.self.getLastSeenQuorumVerifier().getVersion();
+                   String msg = "Reconfiguration from version " + configId + " failed -- last seen version is " + lzks.self.getLastSeenQuorumVerifier().getVersion();
                    throw new KeeperException.BadVersionException(msg);
                 }
 
@@ -472,15 +461,13 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                    
                    List<String> joiningServers = null; 
                    String joiningServersString = reconfigRequest.getJoiningServers();
-                   if (joiningServersString != null)
-                   {
+                   if (joiningServersString != null) {
                        joiningServers = StringUtils.split(joiningServersString,",");
                    }
                    
                    List<String> leavingServers = null;
                    String leavingServersString = reconfigRequest.getLeavingServers();
-                   if (leavingServersString != null)
-                   {
+                   if (leavingServersString != null) {
                        leavingServers = StringUtils.split(leavingServersString, ",");
                    }
                    
@@ -587,8 +574,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 // queues up this operation without being the session owner.
                 // this request is the last of the session so it should be ok
                 //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                Set<String> es = zks.getZKDatabase()
-                        .getEphemerals(request.sessionId);
+                Set<String> es = zks.getZKDatabase().getEphemerals(request.sessionId);
                 synchronized (zks.outstandingChanges) {
                     for (ChangeRecord c : zks.outstandingChanges) {
                         if (c.stat == null) {
@@ -605,8 +591,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     zks.sessionTracker.setSessionClosing(request.sessionId);
                 }
 
-                LOG.info("Processed session termination for sessionid: 0x"
-                        + Long.toHexString(request.sessionId));
+                LOG.info("Processed session termination for sessionid: 0x" + Long.toHexString(request.sessionId));
                 break;
             case OpCode.check:
                 zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
@@ -617,8 +602,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 validatePath(path, request.sessionId);
                 nodeRecord = getRecordForPath(path);
                 checkACL(zks, nodeRecord.acl, ZooDefs.Perms.READ, request.authInfo);
-                request.setTxn(new CheckVersionTxn(path, checkAndIncVersion(nodeRecord.stat.getVersion(),
-                        checkVersionRequest.getVersion(), path)));
+                request.setTxn(new CheckVersionTxn(path, checkAndIncVersion(nodeRecord.stat.getVersion(), checkVersionRequest.getVersion(), path)));
                 break;
             default:
                 LOG.warn("unknown type " + type);
@@ -681,8 +665,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         } else if (type == OpCode.createTTL) {
             request.setTxn(new CreateTTLTxn(path, data, listACL, newCversion, ttl));
         } else {
-            request.setTxn(new CreateTxn(path, data, listACL, createMode.isEphemeral(),
-                    newCversion));
+            request.setTxn(new CreateTxn(path, data, listACL, createMode.isEphemeral(), newCversion));
         }
         StatPersisted s = new StatPersisted();
         if (createMode.isEphemeral()) {
@@ -695,28 +678,27 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         addChangeRecord(new ChangeRecord(request.getHdr().getZxid(), path, s, 0, listACL));
     }
 
+    // 校验path格式
     private void validatePath(String path, long sessionId) throws BadArgumentsException {
         try {
             PathUtils.validatePath(path);
         } catch(IllegalArgumentException ie) {
-            LOG.info("Invalid path {} with session 0x{}, reason: {}",
-                    path, Long.toHexString(sessionId), ie.getMessage());
+            LOG.info("Invalid path {} with session 0x{}, reason: {}", path, Long.toHexString(sessionId), ie.getMessage());
             throw new BadArgumentsException(path);
         }
     }
 
-    private String getParentPathAndValidate(String path)
-            throws BadArgumentsException {
+    // 返回父路径
+    private String getParentPathAndValidate(String path) throws BadArgumentsException {
         int lastSlash = path.lastIndexOf('/');
-        if (lastSlash == -1 || path.indexOf('\0') != -1
-                || zks.getZKDatabase().isSpecialPath(path)) {
+        if (lastSlash == -1 || path.indexOf('\0') != -1 || zks.getZKDatabase().isSpecialPath(path)) {
             throw new BadArgumentsException(path);
         }
         return path.substring(0, lastSlash);
     }
 
-    private static int checkAndIncVersion(int currentVersion, int expectedVersion, String path)
-            throws KeeperException.BadVersionException {
+    //检验版本号，并自增
+    private static int checkAndIncVersion(int currentVersion, int expectedVersion, String path) throws KeeperException.BadVersionException {
         if (expectedVersion != -1 && expectedVersion != currentVersion) {
             throw new KeeperException.BadVersionException(path);
         }
@@ -834,8 +816,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                     txns.add(new Txn(type, bb.array()));
                 }
 
-                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid,
-                        Time.currentWallTime(), request.type));
+                request.setHdr(new TxnHeader(request.sessionId, request.cxid, zxid, Time.currentWallTime(), request.type));
                 request.setTxn(new MultiTxn(txns));
 
                 break;
@@ -844,8 +825,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.createSession:
             case OpCode.closeSession:
                 if (!request.isLocalSession()) {
-                    pRequest2Txn(request.type, zks.getNextZxid(), request,
-                                 null, true);
+                    pRequest2Txn(request.type, zks.getNextZxid(), request, null, true);
                 }
                 break;
 
@@ -860,8 +840,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             case OpCode.setWatches:
             case OpCode.checkWatches:
             case OpCode.removeWatches:
-                zks.sessionTracker.checkSession(request.sessionId,
-                        request.getOwner());
+                zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
                 break;
             default:
                 LOG.warn("unknown type " + request.type);
@@ -903,6 +882,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         nextProcessor.processRequest(request);
     }
 
+    // 去除掉acl里面相同的元素
     private List<ACL> removeDuplicates(List<ACL> acl) {
 
         LinkedList<ACL> retval = new LinkedList<ACL>();
@@ -914,9 +894,8 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         return retval;
     }
 
-    private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl)
-            throws KeeperException {
-        if (createMode.isTTL() && !EphemeralType.extendedEphemeralTypesEnabled()) {
+    private void validateCreateRequest(String path, CreateMode createMode, Request request, long ttl) throws KeeperException {
+        if (createMode.isTTL() && !EphemeralType.extendedEphemeralTypesEnabled()) {   // ttl 必须extendEnable
             throw new KeeperException.UnimplementedException();
         }
         try {
@@ -930,11 +909,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             if (request.getException() != null) {
                 throw request.getException();
             }
-            zks.sessionTracker.checkGlobalSession(request.sessionId,
-                    request.getOwner());
+            zks.sessionTracker.checkGlobalSession(request.sessionId, request.getOwner());
         } else {
-            zks.sessionTracker.checkSession(request.sessionId,
-                    request.getOwner());
+            zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
         }
     }
 
@@ -943,13 +920,12 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
      * it has valid schemes and ids, and expanding any relative ids that
      * depend on the requestor's authentication information.
      *
-     * @param authInfo list of ACL IDs associated with the client connection
-     * @param acls list of ACLs being assigned to the node (create or setACL operation)
+     * @param authInfo list of ACL IDs associated with the client connection              用户权限
+     * @param acls list of ACLs being assigned to the node (create or setACL operation)   node ACL
      * @return verified and expanded ACLs
      * @throws KeeperException.InvalidACLException
      */
-    private List<ACL> fixupACL(String path, List<Id> authInfo, List<ACL> acls)
-        throws KeeperException.InvalidACLException {
+    private List<ACL> fixupACL(String path, List<Id> authInfo, List<ACL> acls) throws KeeperException.InvalidACLException {
         // check for well formed ACLs
         // This resolves https://issues.apache.org/jira/browse/ZOOKEEPER-1877
         List<ACL> uniqacls = removeDuplicates(acls);
@@ -957,7 +933,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         if (uniqacls == null || uniqacls.size() == 0) {
             throw new KeeperException.InvalidACLException(path);
         }
-        for (ACL a: uniqacls) {
+        for (ACL a: uniqacls) {                      // 遍历node ACL
             LOG.debug("Processing ACL: {}", a);
             if (a == null) {
                 throw new KeeperException.InvalidACLException(path);
@@ -972,12 +948,10 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 // This is the "auth" id, so we have to expand it to the
                 // authenticated ids of the requestor
                 boolean authIdValid = false;
-                for (Id cid : authInfo) {
-                    AuthenticationProvider ap =
-                        ProviderRegistry.getProvider(cid.getScheme());
+                for (Id cid : authInfo) {    // 遍历用户权限
+                    AuthenticationProvider ap = ProviderRegistry.getProvider(cid.getScheme());
                     if (ap == null) {
-                        LOG.error("Missing AuthenticationProvider for "
-                            + cid.getScheme());
+                        LOG.error("Missing AuthenticationProvider for " + cid.getScheme());
                     } else if (ap.isAuthenticated()) {
                         authIdValid = true;
                         rv.add(new ACL(a.getPerms(), cid));

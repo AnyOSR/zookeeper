@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Represents a single operation in a multi-operation transaction.  Each operation can be a create, update
+ * Represents a single operation in a multi-operation transaction.  Each operation can be a create, update   multi中的一个操作，可能是create update delete version check
  * or delete or can just be a version check.
  *
  * Sub-classes of Op each represent each detailed type but should not normally be referenced except via

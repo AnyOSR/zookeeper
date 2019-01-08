@@ -45,13 +45,12 @@ import java.util.concurrent.LinkedBlockingQueue;
  *             since it only contains committed txns.
  */
 public class SyncRequestProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
-    private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
-    private final ZooKeeperServer zks;
-    private final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
-    private final RequestProcessor nextProcessor;
 
-    private Thread snapInProcess = null;
-    volatile private boolean running;
+    /**
+     * The number of log entries to log before starting a snapshot
+     */
+    private static int snapCount = ZooKeeperServer.getSnapCount();
+    private static final Logger LOG = LoggerFactory.getLogger(SyncRequestProcessor.class);
 
     /**
      * Transactions that have been written and are waiting to be flushed to
@@ -59,13 +58,14 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
      * invoked after flush returns successfully.
      */
     private final LinkedList<Request> toFlush = new LinkedList<Request>();
-    private final Random r = new Random(System.nanoTime());
-    /**
-     * The number of log entries to log before starting a snapshot
-     */
-    private static int snapCount = ZooKeeperServer.getSnapCount();
+    private final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
+    private final ZooKeeperServer zks;
+    private final RequestProcessor nextProcessor;
 
+    private Thread snapInProcess = null;
+    volatile private boolean running;
     private final Request requestOfDeath = Request.requestOfDeath;
+    private final Random r = new Random(System.nanoTime());
 
     public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
         super("SyncThread:" + zks.getServerId(), zks.getZooKeeperServerListener());

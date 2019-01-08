@@ -18,18 +18,14 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.LinkedBlockingQueue;
-
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.RequestProcessor;
-import org.apache.zookeeper.server.WorkerService;
-import org.apache.zookeeper.server.ZooKeeperCriticalThread;
-import org.apache.zookeeper.server.ZooKeeperServerListener;
+
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This RequestProcessor matches the incoming committed requests with the
@@ -64,35 +60,29 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
  * The current implementation solves the third constraint by simply allowing no
  * read requests to be processed in parallel with write requests.
  */
-public class CommitProcessor extends ZooKeeperCriticalThread implements
-        RequestProcessor {
+public class CommitProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
+
     private static final Logger LOG = LoggerFactory.getLogger(CommitProcessor.class);
 
     /** Default: numCores */
-    public static final String ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS =
-        "zookeeper.commitProcessor.numWorkerThreads";
+    public static final String ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS = "zookeeper.commitProcessor.numWorkerThreads";
     /** Default worker pool shutdown timeout in ms: 5000 (5s) */
-    public static final String ZOOKEEPER_COMMIT_PROC_SHUTDOWN_TIMEOUT =
-        "zookeeper.commitProcessor.shutdownTimeout";
+    public static final String ZOOKEEPER_COMMIT_PROC_SHUTDOWN_TIMEOUT = "zookeeper.commitProcessor.shutdownTimeout";
 
     /**
      * Requests that we are holding until the commit comes in.
      */
-    protected final LinkedBlockingQueue<Request> queuedRequests =
-        new LinkedBlockingQueue<Request>();
+    protected final LinkedBlockingQueue<Request> queuedRequests = new LinkedBlockingQueue<Request>();
 
     /**
      * Requests that have been committed.
      */
-    protected final LinkedBlockingQueue<Request> committedRequests =
-        new LinkedBlockingQueue<Request>();
+    protected final LinkedBlockingQueue<Request> committedRequests = new LinkedBlockingQueue<Request>();
 
     /** Request for which we are currently awaiting a commit */
-    protected final AtomicReference<Request> nextPending =
-        new AtomicReference<Request>();
+    protected final AtomicReference<Request> nextPending = new AtomicReference<Request>();
     /** Request currently being committed (ie, sent off to next processor) */
-    private final AtomicReference<Request> currentlyCommitting =
-        new AtomicReference<Request>();
+    private final AtomicReference<Request> currentlyCommitting = new AtomicReference<Request>();
 
     /** The number of requests currently being processed */
     protected AtomicInteger numRequestsProcessing = new AtomicInteger(0);
@@ -110,8 +100,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements
      */
     boolean matchSyncs;
 
-    public CommitProcessor(RequestProcessor nextProcessor, String id,
-                           boolean matchSyncs, ZooKeeperServerListener listener) {
+    public CommitProcessor(RequestProcessor nextProcessor, String id, boolean matchSyncs, ZooKeeperServerListener listener) {
         super("CommitProcessor:" + id, listener);
         this.nextProcessor = nextProcessor;
         this.matchSyncs = matchSyncs;

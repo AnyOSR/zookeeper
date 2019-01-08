@@ -48,15 +48,13 @@ public class PathUtils {
             throw new IllegalArgumentException("Path length must be > 0");
         }
         if (path.charAt(0) != '/') {
-            throw new IllegalArgumentException(
-                         "Path must start with / character");
+            throw new IllegalArgumentException("Path must start with / character");
         }
         if (path.length() == 1) { // done checking - it's the root
             return;
         }
         if (path.charAt(path.length() - 1) == '/') {
-            throw new IllegalArgumentException(
-                         "Path must not end with / character");
+            throw new IllegalArgumentException("Path must not end with / character");
         }
 
         String reason = null;
@@ -73,16 +71,12 @@ public class PathUtils {
                 reason = "empty node name specified @" + i;
                 break;
             } else if (c == '.' && lastc == '.') {
-                if (chars[i-2] == '/' &&
-                        ((i + 1 == chars.length)
-                                || chars[i+1] == '/')) {
+                if (chars[i-2] == '/' && ((i + 1 == chars.length) || chars[i+1] == '/')) {
                     reason = "relative paths not allowed @" + i;
                     break;
                 }
             } else if (c == '.') {
-                if (chars[i-1] == '/' &&
-                        ((i + 1 == chars.length)
-                                || chars[i+1] == '/')) {
+                if (chars[i-1] == '/' && ((i + 1 == chars.length) || chars[i+1] == '/')) {
                     reason = "relative paths not allowed @" + i;
                     break;
                 }
@@ -96,8 +90,7 @@ public class PathUtils {
         }
 
         if (reason != null) {
-            throw new IllegalArgumentException(
-                    "Invalid path string \"" + path + "\" caused by " + reason);
+            throw new IllegalArgumentException("Invalid path string \"" + path + "\" caused by " + reason);
         }
     }
 

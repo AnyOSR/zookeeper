@@ -41,8 +41,8 @@ import java.util.concurrent.TimeUnit;
  * FinalRequestProcessor
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
-    private ContainerManager containerManager;  // guarded by sync
 
+    private ContainerManager containerManager;  // guarded by sync
 
     CommitProcessor commitProcessor;
 
@@ -61,16 +61,14 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         return self.leader;
     }
 
+    //LeaderRequestProcessor PrepRequestProcessor ProposalRequestProcessor CommitProcessor ToBeAppliedRequestProcessor FinalRequestProcessor
     @Override
     protected void setupRequestProcessors() {
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
         RequestProcessor toBeAppliedProcessor = new Leader.ToBeAppliedRequestProcessor(finalProcessor, getLeader());
-        commitProcessor = new CommitProcessor(toBeAppliedProcessor,
-                Long.toString(getServerId()), false,
-                getZooKeeperServerListener());
+        commitProcessor = new CommitProcessor(toBeAppliedProcessor, Long.toString(getServerId()), false, getZooKeeperServerListener());
         commitProcessor.start();
-        ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this,
-                commitProcessor);
+        ProposalRequestProcessor proposalProcessor = new ProposalRequestProcessor(this, commitProcessor);
         proposalProcessor.initialize();
         prepRequestProcessor = new PrepRequestProcessor(this, proposalProcessor);
         prepRequestProcessor.start();
@@ -80,10 +78,11 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     private synchronized void setupContainerManager() {
-        containerManager = new ContainerManager(getZKDatabase(), prepRequestProcessor,
+        containerManager = new ContainerManager(
+                getZKDatabase(),
+                prepRequestProcessor,
                 Integer.getInteger("znode.container.checkIntervalMs", (int) TimeUnit.MINUTES.toMillis(1)),
-                Integer.getInteger("znode.container.maxPerMinute", 10000)
-                );
+                Integer.getInteger("znode.container.maxPerMinute", 10000));
     }
 
     @Override
@@ -110,10 +109,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 
     @Override
     public void createSessionTracker() {
-        sessionTracker = new LeaderSessionTracker(
-                this, getZKDatabase().getSessionWithTimeOuts(),
-                tickTime, self.getId(), self.areLocalSessionsEnabled(), 
-                getZooKeeperServerListener());
+        sessionTracker = new LeaderSessionTracker(this, getZKDatabase().getSessionWithTimeOuts(), tickTime, self.getId(), self.areLocalSessionsEnabled(), getZooKeeperServerListener());
     }
 
     public boolean touch(long sess, int to) {
@@ -121,8 +117,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     public boolean checkIfValidGlobalSession(long sess, int to) {
-        if (self.areLocalSessionsEnabled() &&
-            !upgradeableSessionTracker.isGlobalSession(sess)) {
+        if (self.areLocalSessionsEnabled() && !upgradeableSessionTracker.isGlobalSession(sess)) {
             return false;
         }
         return sessionTracker.touchSession(sess, to);
@@ -162,9 +157,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
         }
     }
 
-    public void registerJMX(LeaderBean leaderBean,
-            LocalPeerBean localPeerBean)
-    {
+    public void registerJMX(LeaderBean leaderBean, LocalPeerBean localPeerBean) {
         // register with JMX
         if (self.jmxLeaderElectionBean != null) {
             try {
@@ -224,8 +217,7 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
-    protected void revalidateSession(ServerCnxn cnxn, long sessionId,
-        int sessionTimeout) throws IOException {
+    protected void revalidateSession(ServerCnxn cnxn, long sessionId, int sessionTimeout) throws IOException {
         super.revalidateSession(cnxn, sessionId, sessionTimeout);
         try {
             // setowner as the leader itself, unless updated
