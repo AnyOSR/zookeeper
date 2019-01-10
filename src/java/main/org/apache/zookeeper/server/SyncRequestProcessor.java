@@ -64,7 +64,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
 
     private Thread snapInProcess = null;
     volatile private boolean running;
-    private final Request requestOfDeath = Request.requestOfDeath;
+    private final Request requestOfDeath = Request.requestOfDeath;       // 毒丸
     private final Random r = new Random(System.nanoTime());
 
     public SyncRequestProcessor(ZooKeeperServer zks, RequestProcessor nextProcessor) {
@@ -101,9 +101,9 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
             int randRoll = r.nextInt(snapCount/2);
             while (true) {
                 Request si = null;
-                if (toFlush.isEmpty()) {
+                if (toFlush.isEmpty()) {            // 没有要刷新的，阻塞式获取
                     si = queuedRequests.take();
-                } else {
+                } else {                            // 否则，没有数据则直接返回
                     si = queuedRequests.poll();
                     if (si == null) {
                         flush(toFlush);
@@ -165,9 +165,7 @@ public class SyncRequestProcessor extends ZooKeeperCriticalThread implements Req
         LOG.info("SyncRequestProcessor exited!");
     }
 
-    private void flush(LinkedList<Request> toFlush)
-        throws IOException, RequestProcessorException
-    {
+    private void flush(LinkedList<Request> toFlush) throws IOException, RequestProcessorException {
         if (toFlush.isEmpty())
             return;
 

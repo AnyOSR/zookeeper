@@ -337,7 +337,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
     }
 
     /**
-     * This method will be called inside the ProcessRequestThread, which is a
+     * This method will be called inside the ProcessRequestThread, which is a     事务请求创建请求头，请求体  changeRecord
      * singleton, so there will be a single thread calling this code.
      *
      * @param type
@@ -574,7 +574,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 // queues up this operation without being the session owner.
                 // this request is the last of the session so it should be ok
                 //zks.sessionTracker.checkSession(request.sessionId, request.getOwner());
-                Set<String> es = zks.getZKDatabase().getEphemerals(request.sessionId);
+                Set<String> es = zks.getZKDatabase().getEphemerals(request.sessionId);   // 获取sessionId的临时节点路径
                 synchronized (zks.outstandingChanges) {
                     for (ChangeRecord c : zks.outstandingChanges) {
                         if (c.stat == null) {
@@ -642,9 +642,9 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
         List<ACL> listACL = fixupACL(path, request.authInfo, acl);
         ChangeRecord parentRecord = getRecordForPath(parentPath);
 
-        checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo);
+        checkACL(zks, parentRecord.acl, ZooDefs.Perms.CREATE, request.authInfo);   // 验证create权限
         int parentCVersion = parentRecord.stat.getCversion();
-        if (createMode.isSequential()) {
+        if (createMode.isSequential()) {                                           // 根据parent cversion来命名path
             path = path + String.format(Locale.ENGLISH, "%010d", parentCVersion);
         }
         validatePath(path, request.sessionId);
@@ -668,7 +668,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
             request.setTxn(new CreateTxn(path, data, listACL, createMode.isEphemeral(), newCversion));
         }
         StatPersisted s = new StatPersisted();
-        if (createMode.isEphemeral()) {
+        if (createMode.isEphemeral()) {                        // 如果是临时的，将owner设置成 sessionId
             s.setEphemeralOwner(request.sessionId);
         }
         parentRecord = parentRecord.duplicate(request.getHdr().getZxid());
@@ -830,6 +830,7 @@ public class PrepRequestProcessor extends ZooKeeperCriticalThread implements Req
                 break;
 
             //All the rest don't need to create a Txn - just verify session
+            // 剩下的不是事务请求，只验证session
             case OpCode.sync:
             case OpCode.exists:
             case OpCode.getData:

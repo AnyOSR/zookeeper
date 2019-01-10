@@ -28,37 +28,38 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * This RequestProcessor matches the incoming committed requests with the
- * locally submitted requests. The trick is that locally submitted requests that
- * change the state of the system will come back as incoming committed requests,
- * so we need to match them up.
+ * This RequestProcessor matches the incoming committed requests with the               匹配 incoming committed requests
+ * locally submitted requests. The trick is that locally submitted requests that             locally submitted requests
+ * change the state of the system will come back as incoming committed requests,        本地提交的请求 will come back as incoming committed requests
+ * so we need to match them up.                                                         so match
  *
- * The CommitProcessor is multi-threaded. Communication between threads is
+ * The CommitProcessor is multi-threaded. Communication between threads is              多线程   通过队列 atomics 同步来进行通信
  * handled via queues, atomics, and wait/notifyAll synchronized on the
- * processor. The CommitProcessor acts as a gateway for allowing requests to
- * continue with the remainder of the processing pipeline. It will allow many
+ * processor. The CommitProcessor acts as a gateway for allowing requests to           作为一个网关，允许请求继续在处理链上进行处理
+ * continue with the remainder of the processing pipeline. It will allow many          同时允许许多读请求，但是只有一个写请求
  * read requests but only a single write request to be in flight simultaneously,
- * thus ensuring that write requests are processed in transaction id order.
+ * thus ensuring that write requests are processed in transaction id order.             保证写请求 顺序处理
  *
- *   - 1   commit processor main thread, which watches the request queues and
+ *   - 1   commit processor main thread, which watches the request queues and           主线程 观察请求队列，基于sessionId分发请求到工作线程，
  *         assigns requests to worker threads based on their sessionId so that
- *         read and write requests for a particular session are always assigned
+ *         read and write requests for a particular session are always assigned          so，对于某一个特定的session来说，读写任务总是在一个线程上被处理 保证顺序
  *         to the same thread (and hence are guaranteed to run in order).
- *   - 0-N worker threads, which run the rest of the request processor pipeline
+ *   - 0-N worker threads, which run the rest of the request processor pipeline         工作线程 剩下processor request的处理线程
  *         on the requests. If configured with 0 worker threads, the primary
  *         commit processor thread runs the pipeline directly.
  *
  * Typical (default) thread counts are: on a 32 core machine, 1 commit
  * processor thread and 32 worker threads.
  *
- * Multi-threading constraints:
- *   - Each session's requests must be processed in order.
- *   - Write requests must be processed in zxid order
- *   - Must ensure no race condition between writes in one session that would
+ * Multi-threading constraints:                                                       多线程约束：
+ *   - Each session's requests must be processed in order.                                          每个session的请求必须顺序处理
+ *   - Write requests must be processed in zxid order                                               写请求必须按照zxid顺序处理
+ *   - Must ensure no race condition between writes in one session that would                       避免竞态条件
  *     trigger a watch being set by a read request in another session
  *
  * The current implementation solves the third constraint by simply allowing no
  * read requests to be processed in parallel with write requests.
+ *
  */
 public class CommitProcessor extends ZooKeeperCriticalThread implements RequestProcessor {
 
@@ -82,9 +83,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     /** Request for which we are currently awaiting a commit */
     protected final AtomicReference<Request> nextPending = new AtomicReference<Request>();
     /** Request currently being committed (ie, sent off to next processor) */
-    private final AtomicReference<Request> currentlyCommitting = new AtomicReference<Request>();
+    private final AtomicReference<Request> currentlyCommitting = new AtomicReference<Request>();   // 初始化的引用为null
 
-    /** The number of requests currently being processed */
+    /** The number of requests currently being processed */  //正在被后续processor处理的request
     protected AtomicInteger numRequestsProcessing = new AtomicInteger(0);
 
     RequestProcessor nextProcessor;
@@ -94,8 +95,8 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     protected WorkerService workerPool;
 
     /**
-     * This flag indicates whether we need to wait for a response to come back from the
-     * leader or we just let the sync operation flow through like a read. The flag will
+     * This flag indicates whether we need to wait for a response to come back from the   是否需要等待从leader返回的响应
+     * leader or we just let the sync operation flow through like a read. The flag will   或者让同步操作直接流过，像读操作一样
      * be false if the CommitProcessor is in a Leader pipeline.
      */
     boolean matchSyncs;
@@ -141,31 +142,33 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         }
     }
 
+    // 主线程
     @Override
     public void run() {
         Request request;
         try {
             while (!stopped) {
                 synchronized(this) {
-                    while (
-                        !stopped &&
-                        ((queuedRequests.isEmpty() || isWaitingForCommit() || isProcessingCommit()) &&
-                         (committedRequests.isEmpty() || isProcessingRequest()))) {
+                    while (!stopped &&
+                        ((queuedRequests.isEmpty() || isWaitingForCommit() || isProcessingCommit()) && (committedRequests.isEmpty() || isProcessingRequest()))) {
                         wait();
                     }
                 }
+                // 如果queuedRequests不为空且没有在等待commit且没有在处理commit(没有在处理写请求)  入口
+                // 或者committedRequests不为空且 没有在处理request请求(没有在处理读请求)
 
                 /*
                  * Processing queuedRequests: Process the next requests until we
                  * find one for which we need to wait for a commit. We cannot
                  * process a read request while we are processing write request.
                  */
-                while (!stopped && !isWaitingForCommit() &&
-                       !isProcessingCommit() &&
-                       (request = queuedRequests.poll()) != null) {
-                    if (needCommit(request)) {
+                //  没有在等待commit 且没有commit请求正在被处理，则处理queuedRequests里面的请求
+                // 如果正在wait commit 或者正在处理commit，则不处理queuedRequests里面的请求
+                // 读写都是由主线程发起的
+                while (!stopped && !isWaitingForCommit() && !isProcessingCommit() && (request = queuedRequests.poll()) != null) {
+                    if (needCommit(request)) {       // 需要commit，则将nextPending指向这个request  写 主线程
                         nextPending.set(request);
-                    } else {
+                    } else {                        // 否则不需要commit，直接传递到下一个processor进行处理，读 worker线程
                         sendToNextProcessor(request);
                     }
                 }
@@ -175,6 +178,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                  * came in for the pending request. We can only commit a
                  * request when there is no other request being processed.
                  */
+                // 如果正在等待commit或者正在处理commit
                 processCommitted();
             }
         } catch (Throwable e) {
@@ -190,8 +194,9 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     protected void processCommitted() {
         Request request;
 
-        if (!stopped && !isProcessingRequest() &&
-                (committedRequests.peek() != null)) {
+        // 处理commit的时候，没有request正在处理
+        // 互斥
+        if (!stopped && !isProcessingRequest() && (committedRequests.peek() != null)) {
 
             /*
              * ZOOKEEPER-1863: continue only if there is no new request
@@ -210,9 +215,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
              * properly.
              */
             Request pending = nextPending.get();
-            if (pending != null &&
-                pending.sessionId == request.sessionId &&
-                pending.cxid == request.cxid) {
+            if (pending != null && pending.sessionId == request.sessionId && pending.cxid == request.cxid) {
                 // we want to send our version of the request.
                 // the pointer to the connection in the request
                 pending.setHdr(request.getHdr());
@@ -236,17 +239,12 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
     @Override
     public void start() {
         int numCores = Runtime.getRuntime().availableProcessors();
-        int numWorkerThreads = Integer.getInteger(
-            ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, numCores);
-        workerShutdownTimeoutMS = Long.getLong(
-            ZOOKEEPER_COMMIT_PROC_SHUTDOWN_TIMEOUT, 5000);
+        int numWorkerThreads = Integer.getInteger(ZOOKEEPER_COMMIT_PROC_NUM_WORKER_THREADS, numCores);
+        workerShutdownTimeoutMS = Long.getLong(ZOOKEEPER_COMMIT_PROC_SHUTDOWN_TIMEOUT, 5000);
 
-        LOG.info("Configuring CommitProcessor with "
-                 + (numWorkerThreads > 0 ? numWorkerThreads : "no")
-                 + " worker threads.");
+        LOG.info("Configuring CommitProcessor with " + (numWorkerThreads > 0 ? numWorkerThreads : "no") + " worker threads.");
         if (workerPool == null) {
-            workerPool = new WorkerService(
-                "CommitProcWork", numWorkerThreads, true);
+            workerPool = new WorkerService("CommitProcWork", numWorkerThreads, true);
         }
         stopped = false;
         super.start();
@@ -257,7 +255,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
      * used, processing is done directly by this thread.
      */
     private void sendToNextProcessor(Request request) {
-        numRequestsProcessing.incrementAndGet();
+        numRequestsProcessing.incrementAndGet();                                      // 增大 numRequestsProcessing,表示有request正在被处理
         workerPool.schedule(new CommitWorkRequest(request), request.sessionId);
     }
 
@@ -275,8 +273,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
         @Override
         public void cleanup() {
             if (!stopped) {
-                LOG.error("Exception thrown by downstream processor,"
-                          + " unable to continue.");
+                LOG.error("Exception thrown by downstream processor," + " unable to continue.");
                 CommitProcessor.this.halt();
             }
         }
@@ -296,8 +293,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                  * requests.
                  */
                 if (numRequestsProcessing.decrementAndGet() == 0) {
-                    if (!queuedRequests.isEmpty() ||
-                        !committedRequests.isEmpty()) {
+                    if (!queuedRequests.isEmpty() || !committedRequests.isEmpty()) {
                         wakeup();
                     }
                 }
