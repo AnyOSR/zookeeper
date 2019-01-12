@@ -550,8 +550,7 @@ public class ZooKeeperMain {
                         options.put("readonly", "true");
                     }
                 } catch (NoSuchElementException e) {
-                    System.err.println("Error: no argument found for option "
-                            + opt);
+                    System.err.println("Error: no argument found for option " + opt);
                     return false;
                 }
 
