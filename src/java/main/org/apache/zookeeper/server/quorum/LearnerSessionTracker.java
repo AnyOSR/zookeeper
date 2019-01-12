@@ -17,17 +17,6 @@
  */
 package org.apache.zookeeper.server.quorum;
 
-import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.apache.zookeeper.KeeperException.SessionExpiredException;
 import org.apache.zookeeper.KeeperException.SessionMovedException;
 import org.apache.zookeeper.KeeperException.UnknownSessionException;
@@ -36,15 +25,22 @@ import org.apache.zookeeper.server.ZooKeeperServerListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
- * The learner session tracker is used by learners (followers and observers) to
+ * The learner session tracker is used by learners (followers and observers) to            learner用来保存 zk session的(这个session可能会被响应到leader，也可能不会)
  * track zookeeper sessions which may or may not be echoed to the leader.  When
- * a new session is created it is saved locally in a wrapped
- * LocalSessionTracker.  It can subsequently be upgraded to a global session
- * as required.  If an upgrade is requested the session is removed from local
- * collections while keeping the same session ID.  It is up to the caller to
+ * a new session is created it is saved locally in a wrapped                               当一个新的session被创建，它被保存在本地的LocalSessionTracker中
+ * LocalSessionTracker.  It can subsequently be upgraded to a global session               如果有需要的话，他会升级成一个global session
+ * as required.  If an upgrade is requested the session is removed from local              如果需要升级的话，session从本地移除，然后session id保持不变？
+ * collections while keeping the same session ID.  It is up to the caller to               取决于caller，入队session creation request for the leader
  * queue a session creation request for the leader.
- * A secondary function of the learner session tracker is to remember sessions
+ * A secondary function of the learner session tracker is to remember sessions             在这个service touch过的session会被记住，然后通过ping发送给leader
  * which have been touched in this service.  This information is passed along
  * to the leader with a ping.
  */
@@ -53,18 +49,14 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
 
     private final SessionExpirer expirer;
     // Touch table for the global sessions
-    private final AtomicReference<Map<Long, Integer>> touchTable =
-        new AtomicReference<Map<Long, Integer>>();
+    private final AtomicReference<Map<Long, Integer>> touchTable = new AtomicReference<Map<Long, Integer>>();
     private final long serverId;
     private final AtomicLong nextSessionId = new AtomicLong();
 
     private final boolean localSessionsEnabled;
     private final ConcurrentMap<Long, Integer> globalSessionsWithTimeouts;
 
-    public LearnerSessionTracker(SessionExpirer expirer,
-            ConcurrentMap<Long, Integer> sessionsWithTimeouts,
-            int tickTime, long id, boolean localSessionsEnabled,
-            ZooKeeperServerListener listener) {
+    public LearnerSessionTracker(SessionExpirer expirer, ConcurrentMap<Long, Integer> sessionsWithTimeouts, int tickTime, long id, boolean localSessionsEnabled, ZooKeeperServerListener listener) {
         this.expirer = expirer;
         this.touchTable.set(new ConcurrentHashMap<Long, Integer>());
         this.globalSessionsWithTimeouts = sessionsWithTimeouts;
@@ -102,8 +94,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
     }
 
     public boolean addGlobalSession(long sessionId, int sessionTimeout) {
-        boolean added =
-            globalSessionsWithTimeouts.put(sessionId, sessionTimeout) == null;
+        boolean added = globalSessionsWithTimeouts.put(sessionId, sessionTimeout) == null;
         if (localSessionsEnabled && added) {
             // Only do extra logging so we know what kind of session this is
             // if we're supporting both kinds of sessions
@@ -122,8 +113,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
                 added = false;
                 localSessionTracker.removeSession(sessionId);
             } else if (added) {
-                LOG.info("Adding local session 0x"
-                         + Long.toHexString(sessionId));
+                LOG.info("Adding local session 0x" + Long.toHexString(sessionId));
             }
         } else {
             added = addGlobalSession(sessionId, sessionTimeout);
@@ -155,8 +145,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         return nextSessionId.getAndIncrement();
     }
 
-    public void checkSession(long sessionId, Object owner)
-            throws SessionExpiredException, SessionMovedException  {
+    public void checkSession(long sessionId, Object owner) throws SessionExpiredException, SessionMovedException  {
         if (localSessionTracker != null) {
             try {
                 localSessionTracker.checkSession(sessionId, owner);
@@ -173,8 +162,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         }
     }
 
-    public void setOwner(long sessionId, Object owner)
-            throws SessionExpiredException {
+    public void setOwner(long sessionId, Object owner) throws SessionExpiredException {
         if (localSessionTracker != null) {
             try {
                 localSessionTracker.setOwner(sessionId, owner);
@@ -199,8 +187,7 @@ public class LearnerSessionTracker extends UpgradeableSessionTracker {
         pwriter.print("Global Sessions(");
         pwriter.print(globalSessionsWithTimeouts.size());
         pwriter.println("):");
-        SortedSet<Long> sessionIds = new TreeSet<Long>(
-                globalSessionsWithTimeouts.keySet());
+        SortedSet<Long> sessionIds = new TreeSet<Long>(globalSessionsWithTimeouts.keySet());
         for (long sessionId : sessionIds) {
             pwriter.print("0x");
             pwriter.print(Long.toHexString(sessionId));

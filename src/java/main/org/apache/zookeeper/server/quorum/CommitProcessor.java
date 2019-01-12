@@ -155,7 +155,7 @@ public class CommitProcessor extends ZooKeeperCriticalThread implements RequestP
                     }
                 }
                 // 如果queuedRequests不为空且没有在等待commit且没有在处理commit(没有在处理写请求)  入口
-                // 或者committedRequests不为空且 没有在处理request请求(没有在处理读请求)
+                // 或者committedRequests不为空且 没有在处理request请求(没有在处理读请求)  状态机
 
                 /*
                  * Processing queuedRequests: Process the next requests until we

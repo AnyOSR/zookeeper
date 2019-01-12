@@ -37,7 +37,7 @@ import java.nio.ByteBuffer;
  * Abstract base class for all ZooKeeperServers that participate in
  * a quorum.
  */
-public abstract class QuorumZooKeeperServer extends ZooKeeperServer {
+public abstract class   QuorumZooKeeperServer extends ZooKeeperServer {
 
     public final QuorumPeer self;
     protected UpgradeableSessionTracker upgradeableSessionTracker;

@@ -17,17 +17,13 @@
  */
 package org.apache.zookeeper.server.quorum;
 
-import java.io.IOException;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
+import org.apache.zookeeper.server.*;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.zookeeper.server.FinalRequestProcessor;
-import org.apache.zookeeper.server.Request;
-import org.apache.zookeeper.server.RequestProcessor;
-import org.apache.zookeeper.server.SyncRequestProcessor;
-import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+
+import java.io.IOException;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * A ZooKeeperServer for the Observer node type. Not much is different, but
@@ -35,8 +31,7 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  *
  */
 public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
-    private static final Logger LOG =
-        LoggerFactory.getLogger(ObserverZooKeeperServer.class);        
+    private static final Logger LOG = LoggerFactory.getLogger(ObserverZooKeeperServer.class);
     
     /**
      * Enable since request processor for writing txnlog to disk and
@@ -48,8 +43,7 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
     /*
      * Pending sync requests
      */
-    ConcurrentLinkedQueue<Request> pendingSyncs = 
-        new ConcurrentLinkedQueue<Request>();
+    ConcurrentLinkedQueue<Request> pendingSyncs = new ConcurrentLinkedQueue<Request>();
 
     ObserverZooKeeperServer(FileTxnSnapLog logFactory, QuorumPeer self, ZKDatabase zkDb) throws IOException {
         super(logFactory, self.tickTime, self.minSessionTimeout, self.maxSessionTimeout, zkDb, self);
@@ -91,9 +85,7 @@ public class ObserverZooKeeperServer extends LearnerZooKeeperServer {
         // Observers to, for example, remove the disk sync requirements.
         // Currently, they behave almost exactly the same as followers.
         RequestProcessor finalProcessor = new FinalRequestProcessor(this);
-        commitProcessor = new CommitProcessor(finalProcessor,
-                Long.toString(getServerId()), true,
-                getZooKeeperServerListener());
+        commitProcessor = new CommitProcessor(finalProcessor, Long.toString(getServerId()), true, getZooKeeperServerListener());
         commitProcessor.start();
         firstProcessor = new ObserverRequestProcessor(this, commitProcessor);
         ((ObserverRequestProcessor) firstProcessor).start();

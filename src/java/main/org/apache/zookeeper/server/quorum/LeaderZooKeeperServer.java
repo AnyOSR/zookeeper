@@ -124,22 +124,22 @@ public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     /**
-     * Requests coming from the learner should go directly to
+     * Requests coming from the learner should go directly to    从learner来的request应该直接转发到PrepRequestProcessor
      * PrepRequestProcessor
      *
      * @param request
      */
     public void submitLearnerRequest(Request request) {
         /*
-         * Requests coming from the learner should have gone through
+         * Requests coming from the learner should have gone through           从learner来的request已经做过了request校验了，没必要再做一次
          * submitRequest() on each server which already perform some request
          * validation, so we don't need to do it again.
          *
-         * Additionally, LearnerHandler should start submitting requests into
+         * Additionally, LearnerHandler should start submitting requests into      此外，
          * the leader's pipeline only when the leader's server is started, so we
          * can submit the request directly into PrepRequestProcessor.
          *
-         * This is done so that requests from learners won't go through
+         * This is done so that requests from learners won't go through    这样，这些request就不会经过那个升级localsession的LeaderRequestProcessor
          * LeaderRequestProcessor which perform local session upgrade.
          */
         prepRequestProcessor.processRequest(request);

@@ -17,18 +17,13 @@
  */
 package org.apache.zookeeper.server.quorum;
 
+import org.apache.zookeeper.jmx.MBeanRegistry;
+import org.apache.zookeeper.server.*;
+import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-
-import org.apache.zookeeper.jmx.MBeanRegistry;
-import org.apache.zookeeper.server.DataTreeBean;
-import org.apache.zookeeper.server.quorum.LearnerSessionTracker;
-import org.apache.zookeeper.server.ServerCnxn;
-import org.apache.zookeeper.server.SyncRequestProcessor;
-import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.ZooKeeperServerBean;
-import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 
 /**
  * Parent class for all ZooKeeperServers for Learners
@@ -41,11 +36,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     protected CommitProcessor commitProcessor;
     protected SyncRequestProcessor syncProcessor;
 
-    public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime,
-            int minSessionTimeout, int maxSessionTimeout,
-            ZKDatabase zkDb, QuorumPeer self)
-        throws IOException
-    {
+    public LearnerZooKeeperServer(FileTxnSnapLog logFactory, int tickTime, int minSessionTimeout, int maxSessionTimeout, ZKDatabase zkDb, QuorumPeer self) throws IOException {
         super(logFactory, tickTime, minSessionTimeout, maxSessionTimeout, zkDb, self);
     }
 
@@ -88,8 +79,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
     }
 
     @Override
-    protected void revalidateSession(ServerCnxn cnxn, long sessionId,
-            int sessionTimeout) throws IOException {
+    protected void revalidateSession(ServerCnxn cnxn, long sessionId, int sessionTimeout) throws IOException {
         if (upgradeableSessionTracker.isLocalSession(sessionId)) {
             super.revalidateSession(cnxn, sessionId, sessionTimeout);
         } else {
@@ -109,9 +99,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
         }
     }
 
-    public void registerJMX(ZooKeeperServerBean serverBean,
-            LocalPeerBean localPeerBean)
-    {
+    public void registerJMX(ZooKeeperServerBean serverBean, LocalPeerBean localPeerBean) {
         // register with JMX
         if (self.jmxLeaderElectionBean != null) {
             try {
@@ -173,8 +161,7 @@ public abstract class LearnerZooKeeperServer extends QuorumZooKeeperServer {
                 syncProcessor.shutdown();
             }
         } catch (Exception e) {
-            LOG.warn("Ignoring unexpected exception in syncprocessor shutdown",
-                    e);
+            LOG.warn("Ignoring unexpected exception in syncprocessor shutdown", e);
         }
     }
 }

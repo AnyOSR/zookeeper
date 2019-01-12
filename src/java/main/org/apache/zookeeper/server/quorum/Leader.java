@@ -901,11 +901,11 @@ public class Leader {
         public void processRequest(Request request) throws RequestProcessorException {
             next.processRequest(request);
 
-            // The only requests that should be on toBeApplied are write
+            // The only requests that should be on toBeApplied are write      toBeApplied里面的都是写请求，会有请求头
             // requests, for which we will have a hdr. We can't simply use
-            // request.zxid here because that is set on read requests to equal
+            // request.zxid here because that is set on read requests to equal    会有读请求zxid等于这次写请求
             // the zxid of the last write op.
-            if (request.getHdr() != null) {
+            if (request.getHdr() != null) {   // 事务请求
                 long zxid = request.getHdr().getZxid();
                 Iterator<Proposal> iter = leader.toBeApplied.iterator();
                 if (iter.hasNext()) {
@@ -915,8 +915,7 @@ public class Leader {
                         return;
                     }
                 }
-                LOG.error("Committed request not found on toBeApplied: "
-                          + request);
+                LOG.error("Committed request not found on toBeApplied: " + request);
             }
         }
 

@@ -72,18 +72,13 @@ public class ZooTrace {
         }
     }
 
-    static public void logQuorumPacket(Logger log, long mask,
-            char direction, QuorumPacket qp)
-    {
+    static public void logQuorumPacket(Logger log, long mask, char direction, QuorumPacket qp) {
         if (isTraceEnabled(log, mask)) { 
-            logTraceMessage(log, mask, direction +
-                    " " + LearnerHandler.packetToString(qp));
+            logTraceMessage(log, mask, direction + " " + LearnerHandler.packetToString(qp));
          }
     }
 
-    static public void logRequest(Logger log, long mask,
-            char rp, Request request, String header)
-    {
+    static public void logRequest(Logger log, long mask, char rp, Request request, String header) {
         if (isTraceEnabled(log, mask)) {
             log.trace(header + ":" + rp + request.toString());
         }
