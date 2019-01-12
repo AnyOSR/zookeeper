@@ -86,49 +86,49 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This is the main class of ZooKeeper client library. To use a ZooKeeper
- * service, an application must first instantiate an object of ZooKeeper class.
+ * This is the main class of ZooKeeper client library. To use a ZooKeeper              zk客户端主要类
+ * service, an application must first instantiate an object of ZooKeeper class.        为了使用zk，一个应用首先必须初始化一个ZooKeeper实例
  * All the iterations will be done by calling the methods of ZooKeeper class.
  * The methods of this class are thread-safe unless otherwise noted.
  * <p>
- * Once a connection to a server is established, a session ID is assigned to the
- * client. The client will send heart beats to the server periodically to keep
+ * Once a connection to a server is established, a session ID is assigned to the       一旦建立了到server的连接，一个sessionId就会被赋予客户端
+ * client. The client will send heart beats to the server periodically to keep         客户端会周期的发送心跳给server，以保证session存活
  * the session valid.
  * <p>
- * The application can call ZooKeeper APIs through a client as long as the
+ * The application can call ZooKeeper APIs through a client as long as the             只要session有效，应用就可以调用ZooKeeper的api
  * session ID of the client remains valid.
  * <p>
- * If for some reason, the client fails to send heart beats to the server for a
- * prolonged period of time (exceeding the sessionTimeout value, for instance),
+ * If for some reason, the client fails to send heart beats to the server for a         如果因为某些原因，客户端很久都没有成功发送心跳到server，并且这个时间超过了
+ * prolonged period of time (exceeding the sessionTimeout value, for instance),         sessionTimeout，server就会让这个session失效，这个sessionId就会无效
  * the server will expire the session, and the session ID will become invalid.
- * The client object will no longer be usable. To make ZooKeeper API calls, the
+ * The client object will no longer be usable. To make ZooKeeper API calls, the          客户端就不再可用了，为了使用ZooKeeper进行api调用，应用必须创建一个新的客户端对象
  * application must create a new client object.
  * <p>
- * If the ZooKeeper server the client currently connects to fails or otherwise
- * does not respond, the client will automatically try to connect to another
+ * If the ZooKeeper server the client currently connects to fails or otherwise           如果客户端当前连接的server挂了或者没有响应，在其session到期之前，客户端会尝试着去连接别的server
+ * does not respond, the client will automatically try to connect to another             如果成功了，应用可以继续利用这个client
  * server before its session ID expires. If successful, the application can
  * continue to use the client.
  * <p>
- * The ZooKeeper API methods are either synchronous or asynchronous. Synchronous
- * methods blocks until the server has responded. Asynchronous methods just queue
- * the request for sending and return immediately. They take a callback object that
+ * The ZooKeeper API methods are either synchronous or asynchronous. Synchronous         同步方法调用会阻塞，直到server返回响应
+ * methods blocks until the server has responded. Asynchronous methods just queue        异步方法只是入队请求，然后直接返回
+ * the request for sending and return immediately. They take a callback object that      这个回调会被执行，不管这个请求是成功还是返回了一个错误码
  * will be executed either on successful execution of the request or on error with
  * an appropriate return code (rc) indicating the error.
  * <p>
- * Some successful ZooKeeper API calls can leave watches on the "data nodes" in
- * the ZooKeeper server. Other successful ZooKeeper API calls can trigger those
- * watches. Once a watch is triggered, an event will be delivered to the client
- * which left the watch at the first place. Each watch can be triggered only
+ * Some successful ZooKeeper API calls can leave watches on the "data nodes" in         一些成功的zk api调用会放置 watch在server的data node上
+ * the ZooKeeper server. Other successful ZooKeeper API calls can trigger those         另外一些成功的zk api调用能触发这些watch
+ * watches. Once a watch is triggered, an event will be delivered to the client         当某个watch被触发后，一个事件会被发送给client
+ * which left the watch at the first place. Each watch can be triggered only            每个watch只能被触发一次
  * once. Thus, up to one event will be delivered to a client for every watch it
  * leaves.
  * <p>
- * A client needs an object of a class implementing Watcher interface for
+ * A client needs an object of a class implementing Watcher interface for              客户端需要一个实现了Watcher接口的实例来处理发送到客户端的实践
  * processing the events delivered to the client.
  *
- * When a client drops the current connection and re-connects to a server, all the
+ * When a client drops the current connection and re-connects to a server, all the     当一个客户端丢弃掉当前连接，重新连接到服务器，所有现存的watch都会被认为触发了，然后没有被发送的事件会丢失？
  * existing watches are considered as being triggered but the undelivered events
- * are lost. To emulate this, the client will generate a special event to tell
- * the event handler a connection has been dropped. This special event has
+ * are lost. To emulate this, the client will generate a special event to tell         为了模仿这个，客户端会产生一个特殊的事件来告诉事件处理器，一个连接被drop了
+ * the event handler a connection has been dropped. This special event has             这个事件拥有的事件类型是None，KeeperState是连接失效状态
  * EventType None and KeeperState Disconnected.
  *
  */
@@ -936,10 +936,8 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IllegalArgumentException
      *             if an invalid chroot path is specified
      */
-    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
-            boolean canBeReadOnly) throws IOException {
-        this(connectString, sessionTimeout, watcher, canBeReadOnly,
-                createDefaultHostProvider(connectString));
+    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly) throws IOException {
+        this(connectString, sessionTimeout, watcher, canBeReadOnly, createDefaultHostProvider(connectString));
     }
 
     /**
