@@ -169,24 +169,24 @@ public class ZooKeeper implements AutoCloseable {
     protected final HostProvider hostProvider;
 
     /**
-     * This function allows a client to update the connection string by providing 
+     * This function allows a client to update the connection string by providing                  允许client通过提供一个以逗号分割开的host:port对来 更新连接String
      * a new comma separated list of host:port pairs, each corresponding to a 
      * ZooKeeper server. 
      * <p>
      * The function invokes a <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1355">
-     * probabilistic load-balancing algorithm</a> which may cause the client to disconnect from 
-     * its current host with the goal to achieve expected uniform number of connections per server 
-     * in the new list. In case the current host to which the client is connected is not in the new
-     * list this call will always cause the connection to be dropped. Otherwise, the decision
+     * probabilistic load-balancing algorithm</a> which may cause the client to disconnect from        为了使每个server都能有一致的client连接数，会调用负载均衡算法
+     * its current host with the goal to achieve expected uniform number of connections per server     可能会使client断开当前连接
+     * in the new list. In case the current host to which the client is connected is not in the new    假如当前连接的host不在new list中，则当前连接会被drop
+     * list this call will always cause the connection to be dropped. Otherwise, the decision          否则，这个决定依赖于server的情况(上升以及下降，以及变化了多少)
      * is based on whether the number of servers has increased or decreased and by how much.
-     * For example, if the previous connection string contained 3 hosts and now the list contains
-     * these 3 hosts and 2 more hosts, 40% of clients connected to each of the 3 hosts will
-     * move to one of the new hosts in order to balance the load. The algorithm will disconnect 
+     * For example, if the previous connection string contained 3 hosts and now the list contains      比如，如果之前的连接String有三个host，现在的list多了两个host，为了负载均衡，
+     * these 3 hosts and 2 more hosts, 40% of clients connected to each of the 3 hosts will            之前三个host各自40%的客户端连接都会转移到新的host上
+     * move to one of the new hosts in order to balance the load. The algorithm will disconnect        算法会以40%的概率断开当前连接，然后随机的选择一个新的host连接
      * from the current host with probability 0.4 and in this case cause the client to connect 
      * to one of the 2 new hosts, chosen at random.
      * <p>
-     * If the connection is dropped, the client moves to a special mode "reconfigMode" where he chooses
-     * a new server to connect to using the probabilistic algorithm. After finding a server,
+     * If the connection is dropped, the client moves to a special mode "reconfigMode" where he chooses    如果连接被drop，client会进入一种特殊模式 reconfigMode
+     * a new server to connect to using the probabilistic algorithm. After finding a server,                这种模式中，利用概率算法来选择一个新的server来进行连接
      * or exhausting all servers in the new list after trying all of them and failing to connect,
      * the client moves back to the normal mode of operation where it will pick an arbitrary server
      * from the connectString and attempt to connect to it. If establishment of
@@ -260,12 +260,9 @@ public class ZooKeeper implements AutoCloseable {
      * API.
      */
     static class ZKWatchManager implements ClientWatchManager {
-        private final Map<String, Set<Watcher>> dataWatches =
-            new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> existWatches =
-            new HashMap<String, Set<Watcher>>();
-        private final Map<String, Set<Watcher>> childWatches =
-            new HashMap<String, Set<Watcher>>();
+        private final Map<String, Set<Watcher>> dataWatches = new HashMap<String, Set<Watcher>>();
+        private final Map<String, Set<Watcher>> existWatches = new HashMap<String, Set<Watcher>>();
+        private final Map<String, Set<Watcher>> childWatches = new HashMap<String, Set<Watcher>>();
         private boolean disableAutoWatchReset;
 
         ZKWatchManager(boolean disableAutoWatchReset) {

@@ -70,6 +70,5 @@ public interface HostProvider {
      * @param currentHost the host to which this client is currently connected
      * @return true if changing connections is necessary for load-balancing, false otherwise  
      */
-    boolean updateServerList(Collection<InetSocketAddress> serverAddresses,
-        InetSocketAddress currentHost);
+    boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost);
 }
