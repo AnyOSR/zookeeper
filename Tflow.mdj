@@ -11396,6 +11396,23 @@
 										},
 										{
 											"_type": "UMLOperationView",
+											"_id": "AAAAAAFoRs47ZIAs9Vc=",
+											"_parent": {
+												"$ref": "AAAAAAFoQUqGzJs9g80="
+											},
+											"model": {
+												"$ref": "AAAAAAFoRs47GYApbrQ="
+											},
+											"font": "Arial;13;0",
+											"left": 461,
+											"top": 2142,
+											"width": 1059.39208984375,
+											"height": 13,
+											"text": "«synchronized public int getXid()»+getXid()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
 											"_id": "AAAAAAFoRsgcTX/d3ho=",
 											"_parent": {
 												"$ref": "AAAAAAFoQUqGzJs9g80="
@@ -11405,10 +11422,27 @@
 											},
 											"font": "Arial;13;0",
 											"left": 461,
-											"top": 2142,
+											"top": 2157,
 											"width": 1059.39208984375,
 											"height": 13,
 											"text": "«ReplyHeader submitRequest(RequestHeader h, Record request, Record response, WatchRegistration watchRegistration, WatchDeregistration watchDeregistration)»+submitRequest()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAFoRsrO4IAlM4M=",
+											"_parent": {
+												"$ref": "AAAAAAFoQUqGzJs9g80="
+											},
+											"model": {
+												"$ref": "AAAAAAFoRsrOlIAiAe8="
+											},
+											"font": "Arial;13;0",
+											"left": 461,
+											"top": 2172,
+											"width": 1059.39208984375,
+											"height": 13,
+											"text": "+queuePacket()",
 											"horizontalAlignment": 0
 										},
 										{
@@ -11422,10 +11456,27 @@
 											},
 											"font": "Arial;13;0",
 											"left": 461,
-											"top": 2157,
+											"top": 2187,
 											"width": 1059.39208984375,
 											"height": 13,
 											"text": "«void sendPacket(Record request, Record response, AsyncCallback cb, int opCode)»+sendPacket()",
+											"horizontalAlignment": 0
+										},
+										{
+											"_type": "UMLOperationView",
+											"_id": "AAAAAAFoRtrH0YA4naU=",
+											"_parent": {
+												"$ref": "AAAAAAFoQUqGzJs9g80="
+											},
+											"model": {
+												"$ref": "AAAAAAFoRtrHg4A1yl4="
+											},
+											"font": "Arial;13;0",
+											"left": 461,
+											"top": 2202,
+											"width": 1059.39208984375,
+											"height": 13,
+											"text": "«void addAuthInfo(String scheme, byte auth[])»+addAuthInfo()",
 											"horizontalAlignment": 0
 										}
 									],
@@ -11433,7 +11484,7 @@
 									"left": 456,
 									"top": 2107,
 									"width": 1069.39208984375,
-									"height": 68
+									"height": 113
 								},
 								{
 									"_type": "UMLReceptionCompartmentView",
@@ -11473,7 +11524,7 @@
 							"left": 456,
 							"top": 1864,
 							"width": 1069.39208984375,
-							"height": 311,
+							"height": 356,
 							"nameCompartment": {
 								"$ref": "AAAAAAFoQUqGzJs38sQ="
 							},
@@ -16586,6 +16637,15 @@
 						},
 						{
 							"_type": "UMLOperation",
+							"_id": "AAAAAAFoRs47GYApbrQ=",
+							"_parent": {
+								"$ref": "AAAAAAFoQUqGy5s0yaM="
+							},
+							"name": "getXid",
+							"stereotype": "synchronized public int getXid()"
+						},
+						{
+							"_type": "UMLOperation",
 							"_id": "AAAAAAFoRsgcAH/a9ZE=",
 							"_parent": {
 								"$ref": "AAAAAAFoQUqGy5s0yaM="
@@ -16595,12 +16655,29 @@
 						},
 						{
 							"_type": "UMLOperation",
+							"_id": "AAAAAAFoRsrOlIAiAe8=",
+							"_parent": {
+								"$ref": "AAAAAAFoQUqGy5s0yaM="
+							},
+							"name": "queuePacket"
+						},
+						{
+							"_type": "UMLOperation",
 							"_id": "AAAAAAFoRsnFv4Aawig=",
 							"_parent": {
 								"$ref": "AAAAAAFoQUqGy5s0yaM="
 							},
 							"name": "sendPacket",
 							"stereotype": "void sendPacket(Record request, Record response, AsyncCallback cb, int opCode)"
+						},
+						{
+							"_type": "UMLOperation",
+							"_id": "AAAAAAFoRtrHg4A1yl4=",
+							"_parent": {
+								"$ref": "AAAAAAFoQUqGy5s0yaM="
+							},
+							"name": "addAuthInfo",
+							"stereotype": "void addAuthInfo(String scheme, byte auth[])"
 						}
 					]
 				},

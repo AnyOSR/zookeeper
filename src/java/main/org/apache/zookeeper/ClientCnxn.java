@@ -387,7 +387,7 @@ public class ClientCnxn {
 
     public void sendPacket(Record request, Record response, AsyncCallback cb, int opCode) throws IOException {
         // Generate Xid now because it will be sent immediately,
-        // by call to sendThread.sendPacket() below.
+        // by call to sendThread.sendPacket() below.                 立刻生成Xid
         int xid = getXid();
         RequestHeader h = new RequestHeader();
         h.setXid(xid);
@@ -413,8 +413,8 @@ public class ClientCnxn {
                               WatchDeregistration watchDeregistration) {
         Packet packet = null;
 
-        // Note that we do not generate the Xid for the packet yet. It is
-        // generated later at send-time, by an implementation of ClientCnxnSocket::doIO(),
+        // Note that we do not generate the Xid for the packet yet. It is                     不立马生成xid
+        // generated later at send-time, by an implementation of ClientCnxnSocket::doIO(),    发送的时候再生成
         // where the packet is actually sent.
         packet = new Packet(h, r, request, response, watchRegistration);
         packet.cb = cb;
@@ -423,8 +423,8 @@ public class ClientCnxn {
         packet.serverPath = serverPath;
         packet.watchDeregistration = watchDeregistration;
         // The synchronized block here is for two purpose:
-        // 1. synchronize with the final cleanup() in SendThread.run() to avoid race
-        // 2. synchronized against each packet. So if a closeSession packet is added,
+        // 1. synchronize with the final cleanup() in SendThread.run() to avoid race          cleanup() 竞态条件
+        // 2. synchronized against each packet. So if a closeSession packet is added,         如果closeSession被添加了，之后的packet会感知到
         // later packet will be notified.
         synchronized (state) {
             if (!state.isAlive() || closing) {
