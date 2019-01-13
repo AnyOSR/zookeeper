@@ -24,10 +24,10 @@ import java.util.Set;
  */
 public interface ClientWatchManager {
     /**
-     * Return a set of watchers that should be notified of the event. The 
-     * manager must not notify the watcher(s), however it will update it's 
-     * internal structure as if the watches had triggered. The intent being 
-     * that the callee is now responsible for notifying the watchers of the 
+     * Return a set of watchers that should be notified of the event. The      返回event应该被通知的watch集合
+     * manager must not notify the watcher(s), however it will update it's    manager不会通知watch，然后他会改变其内在结构，就好像watch已经被触发了
+     * internal structure as if the watches had triggered. The intent being
+     * that the callee is now responsible for notifying the watchers of the
      * event, possibly at some later time.
      * 
      * @param state event state
@@ -35,6 +35,5 @@ public interface ClientWatchManager {
      * @param path event path
      * @return may be empty set but must not be null
      */
-    public Set<Watcher> materialize(Watcher.Event.KeeperState state,
-        Watcher.Event.EventType type, String path);
+    public Set<Watcher> materialize(Watcher.Event.KeeperState state, Watcher.Event.EventType type, String path);
 }

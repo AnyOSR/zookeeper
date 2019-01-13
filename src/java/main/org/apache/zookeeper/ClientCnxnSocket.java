@@ -75,8 +75,7 @@ abstract class ClientCnxnSocket {
      */
     protected long sessionId;
 
-    void introduce(ClientCnxn.SendThread sendThread, long sessionId,
-                   LinkedBlockingDeque<Packet> outgoingQueue) {
+    void introduce(ClientCnxn.SendThread sendThread, long sessionId, LinkedBlockingDeque<Packet> outgoingQueue) {
         this.sendThread = sendThread;
         this.sessionId = sessionId;
         this.outgoingQueue = outgoingQueue;
@@ -130,8 +129,7 @@ abstract class ClientCnxnSocket {
                 buf.append(Integer.toHexString(b) + ",");
             }
             buf.append("]");
-            LOG.trace("readConnectResult " + incomingBuffer.remaining() + " "
-                    + buf.toString());
+            LOG.trace("readConnectResult " + incomingBuffer.remaining() + " " + buf.toString());
         }
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
         BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
@@ -149,8 +147,7 @@ abstract class ClientCnxnSocket {
         }
 
         this.sessionId = conRsp.getSessionId();
-        sendThread.onConnected(conRsp.getTimeOut(), this.sessionId,
-                conRsp.getPasswd(), isRO);
+        sendThread.onConnected(conRsp.getTimeOut(), this.sessionId, conRsp.getPasswd(), isRO);
     }
 
     abstract boolean isConnected();
@@ -207,9 +204,7 @@ abstract class ClientCnxnSocket {
      * @throws IOException
      * @throws InterruptedException
      */
-    abstract void doTransport(int waitTimeOut, List<Packet> pendingQueue,
-            ClientCnxn cnxn)
-            throws IOException, InterruptedException;
+    abstract void doTransport(int waitTimeOut, List<Packet> pendingQueue, ClientCnxn cnxn) throws IOException, InterruptedException;
 
     /**
      * Close the socket.
@@ -231,15 +226,10 @@ abstract class ClientCnxnSocket {
 
     protected void initProperties() throws IOException {
         try {
-            packetLen = clientConfig.getInt(ZKConfig.JUTE_MAXBUFFER,
-                    ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
-            LOG.info("{} value is {} Bytes", ZKConfig.JUTE_MAXBUFFER,
-                    packetLen);
+            packetLen = clientConfig.getInt(ZKConfig.JUTE_MAXBUFFER, ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT);
+            LOG.info("{} value is {} Bytes", ZKConfig.JUTE_MAXBUFFER, packetLen);
         } catch (NumberFormatException e) {
-            String msg = MessageFormat.format(
-                    "Configured value {0} for property {1} can not be parsed to int",
-                    clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER),
-                    ZKConfig.JUTE_MAXBUFFER);
+            String msg = MessageFormat.format("Configured value {0} for property {1} can not be parsed to int", clientConfig.getProperty(ZKConfig.JUTE_MAXBUFFER), ZKConfig.JUTE_MAXBUFFER);
             LOG.error(msg);
             throw new IOException(msg);
         }

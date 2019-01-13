@@ -23,8 +23,8 @@ import org.apache.zookeeper.Watcher.Event.EventType;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 
 /**
- *  A WatchedEvent represents a change on the ZooKeeper that a Watcher
- *  is able to respond to.  The WatchedEvent includes exactly what happened,
+ *  A WatchedEvent represents a change on the ZooKeeper that a Watcher             WatchedEvent代表了zk上面的一个change，响应给watcher的
+ *  is able to respond to.  The WatchedEvent includes exactly what happened,       包含了正在发生什么，zk的状态，节点的path
  *  the current state of the ZooKeeper, and the path of the znode that
  *  was involved in the event.
  */

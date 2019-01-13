@@ -97,8 +97,7 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx, byte data[],
-                Stat stat);
+        public void processResult(int rc, String path, Object ctx, byte data[], Stat stat);
     }
 
     /**
@@ -130,8 +129,7 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx,
-                List<ACL> acl, Stat stat);
+        public void processResult(int rc, String path, Object ctx, List<ACL> acl, Stat stat);
     }
 
     /**
@@ -161,8 +159,7 @@ public interface AsyncCallback {
          * @param children An unordered array of children of the node on
          *                 given path.
          */
-        public void processResult(int rc, String path, Object ctx,
-                List<String> children);
+        public void processResult(int rc, String path, Object ctx, List<String> children);
     }
 
     /**
@@ -183,8 +180,7 @@ public interface AsyncCallback {
          * @param stat     {@link org.apache.zookeeper.data.Stat} object of
          *                 the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx,
-                List<String> children, Stat stat);
+        public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat);
     }
 
     /**
@@ -206,8 +202,7 @@ public interface AsyncCallback {
          * @param stat {@link org.apache.zookeeper.data.Stat} object of
          *             the node on given path.
          */
-        public void processResult(int rc, String path, Object ctx,
-        		String name, Stat stat);
+        public void processResult(int rc, String path, Object ctx, String name, Stat stat);
     }
 
     /**
@@ -325,7 +320,6 @@ public interface AsyncCallback {
          *                  One result for each operation,
          *                  and the order matches that of input.
          */
-        public void processResult(int rc, String path, Object ctx,
-                List<OpResult> opResults);
+        public void processResult(int rc, String path, Object ctx, List<OpResult> opResults);
     }
 }

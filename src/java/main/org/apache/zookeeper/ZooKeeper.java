@@ -170,8 +170,8 @@ public class ZooKeeper implements AutoCloseable {
 
     /**
      * This function allows a client to update the connection string by providing                  允许client通过提供一个以逗号分割开的host:port对来 更新连接String
-     * a new comma separated list of host:port pairs, each corresponding to a 
-     * ZooKeeper server. 
+     * a new comma separated list of host:port pairs, each corresponding to a
+     * ZooKeeper server.
      * <p>
      * The function invokes a <a href="https://issues.apache.org/jira/browse/ZOOKEEPER-1355">
      * probabilistic load-balancing algorithm</a> which may cause the client to disconnect from        为了使每个server都能有一致的client连接数，会调用负载均衡算法
@@ -182,7 +182,7 @@ public class ZooKeeper implements AutoCloseable {
      * For example, if the previous connection string contained 3 hosts and now the list contains      比如，如果之前的连接String有三个host，现在的list多了两个host，为了负载均衡，
      * these 3 hosts and 2 more hosts, 40% of clients connected to each of the 3 hosts will            之前三个host各自40%的客户端连接都会转移到新的host上
      * move to one of the new hosts in order to balance the load. The algorithm will disconnect        算法会以40%的概率断开当前连接，然后随机的选择一个新的host连接
-     * from the current host with probability 0.4 and in this case cause the client to connect 
+     * from the current host with probability 0.4 and in this case cause the client to connect
      * to one of the 2 new hosts, chosen at random.
      * <p>
      * If the connection is dropped, the client moves to a special mode "reconfigMode" where he chooses    如果连接被drop，client会进入一种特殊模式 reconfigMode
@@ -203,9 +203,9 @@ public class ZooKeeper implements AutoCloseable {
      *            where the client would be rooted at "/app/a" and all paths
      *            would be relative to this root - ie getting/setting/etc...
      *            "/foo/bar" would result in operations being run on
-     *            "/app/a/foo/bar" (from the server perspective).     
+     *            "/app/a/foo/bar" (from the server perspective).
      *
-     * @throws IOException in cases of network failure     
+     * @throws IOException in cases of network failure
      */
     public void updateServerList(String connectString) throws IOException {
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
@@ -277,55 +277,46 @@ public class ZooKeeper implements AutoCloseable {
             }
         }
 
-        public Map<EventType, Set<Watcher>> removeWatcher(String clientPath,
-                Watcher watcher, WatcherType watcherType, boolean local, int rc)
-                throws KeeperException {
+        public Map<EventType, Set<Watcher>> removeWatcher(String clientPath, Watcher watcher, WatcherType watcherType, boolean local, int rc) throws KeeperException {
             // Validate the provided znode path contains the given watcher of
             // watcherType
             containsWatcher(clientPath, watcher, watcherType);
 
             Map<EventType, Set<Watcher>> removedWatchers = new HashMap<EventType, Set<Watcher>>();
             HashSet<Watcher> childWatchersToRem = new HashSet<Watcher>();
-            removedWatchers
-                    .put(EventType.ChildWatchRemoved, childWatchersToRem);
+            removedWatchers.put(EventType.ChildWatchRemoved, childWatchersToRem);
             HashSet<Watcher> dataWatchersToRem = new HashSet<Watcher>();
             removedWatchers.put(EventType.DataWatchRemoved, dataWatchersToRem);
             boolean removedWatcher = false;
             switch (watcherType) {
             case Children: {
                 synchronized (childWatches) {
-                    removedWatcher = removeWatches(childWatches, watcher,
-                            clientPath, local, rc, childWatchersToRem);
+                    removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
                 }
                 break;
             }
             case Data: {
                 synchronized (dataWatches) {
-                    removedWatcher = removeWatches(dataWatches, watcher,
-                            clientPath, local, rc, dataWatchersToRem);
+                    removedWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
                 }
 
                 synchronized (existWatches) {
-                    boolean removedDataWatcher = removeWatches(existWatches,
-                            watcher, clientPath, local, rc, dataWatchersToRem);
+                    boolean removedDataWatcher = removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
                     removedWatcher |= removedDataWatcher;
                 }
                 break;
             }
             case Any: {
                 synchronized (childWatches) {
-                    removedWatcher = removeWatches(childWatches, watcher,
-                            clientPath, local, rc, childWatchersToRem);
+                    removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
                 }
 
                 synchronized (dataWatches) {
-                    boolean removedDataWatcher = removeWatches(dataWatches,
-                            watcher, clientPath, local, rc, dataWatchersToRem);
+                    boolean removedDataWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
                     removedWatcher |= removedDataWatcher;
                 }
                 synchronized (existWatches) {
-                    boolean removedDataWatcher = removeWatches(existWatches,
-                            watcher, clientPath, local, rc, dataWatchersToRem);
+                    boolean removedDataWatcher = removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
                     removedWatcher |= removedDataWatcher;
                 }
             }
@@ -337,8 +328,7 @@ public class ZooKeeper implements AutoCloseable {
             return removedWatchers;
         }
 
-        private boolean contains(String path, Watcher watcherObj,
-                Map<String, Set<Watcher>> pathVsWatchers) {
+        private boolean contains(String path, Watcher watcherObj, Map<String, Set<Watcher>> pathVsWatchers) {
             boolean watcherExists = true;
             if (pathVsWatchers == null || pathVsWatchers.size() == 0) {
                 watcherExists = false;
@@ -358,7 +348,7 @@ public class ZooKeeper implements AutoCloseable {
         /**
          * Validate the provided znode path contains the given watcher and
          * watcherType
-         * 
+         *
          * @param path
          *            - client path
          * @param watcher
@@ -367,8 +357,7 @@ public class ZooKeeper implements AutoCloseable {
          *            - type of the watcher
          * @throws NoWatcherException
         */
-        void containsWatcher(String path, Watcher watcher,
-                WatcherType watcherType) throws NoWatcherException{
+        void containsWatcher(String path, Watcher watcher, WatcherType watcherType) throws NoWatcherException{
             boolean containsWatcher = false;
             switch (watcherType) {
             case Children: {
@@ -383,8 +372,7 @@ public class ZooKeeper implements AutoCloseable {
                 }
 
                 synchronized (existWatches) {
-                    boolean contains_temp = contains(path, watcher,
-                            existWatches);
+                    boolean contains_temp = contains(path, watcher, existWatches);
                     containsWatcher |= contains_temp;
                 }
                 break;
@@ -411,12 +399,9 @@ public class ZooKeeper implements AutoCloseable {
             }
         }
 
-        protected boolean removeWatches(Map<String, Set<Watcher>> pathVsWatcher,
-                Watcher watcher, String path, boolean local, int rc,
-                Set<Watcher> removedWatchers) throws KeeperException {
+        protected boolean removeWatches(Map<String, Set<Watcher>> pathVsWatcher, Watcher watcher, String path, boolean local, int rc, Set<Watcher> removedWatchers) throws KeeperException {
             if (!local && rc != Code.OK.intValue()) {
-                throw KeeperException
-                        .create(KeeperException.Code.get(rc), path);
+                throw KeeperException.create(KeeperException.Code.get(rc), path);
             }
             boolean success = false;
             // When local flag is true, remove watchers for the given path
@@ -448,16 +433,13 @@ public class ZooKeeper implements AutoCloseable {
             }
             return success;
         }
-        
+
         /* (non-Javadoc)
-         * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState, 
+         * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState,
          *                                                        Event.EventType, java.lang.String)
          */
         @Override
-        public Set<Watcher> materialize(Watcher.Event.KeeperState state,
-                                        Watcher.Event.EventType type,
-                                        String clientPath)
-        {
+        public Set<Watcher> materialize(Watcher.Event.KeeperState state, Watcher.Event.EventType type, String clientPath) {
             Set<Watcher> result = new HashSet<Watcher>();
 
             switch (type) {
@@ -523,8 +505,7 @@ public class ZooKeeper implements AutoCloseable {
                 }
                 break;
             default:
-                String msg = "Unhandled watch event type " + type
-                    + " with state " + state + " on path " + clientPath;
+                String msg = "Unhandled watch event type " + type + " with state " + state + " on path " + clientPath;
                 LOG.error(msg);
                 throw new RuntimeException(msg);
             }
@@ -539,12 +520,12 @@ public class ZooKeeper implements AutoCloseable {
     public abstract class WatchRegistration {
         private Watcher watcher;
         private String clientPath;
-        public WatchRegistration(Watcher watcher, String clientPath)
-        {
+        public WatchRegistration(Watcher watcher, String clientPath) {
             this.watcher = watcher;
             this.clientPath = clientPath;
         }
 
+        // path set<Watch>
         abstract protected Map<String, Set<Watcher>> getWatches(int rc);
 
         /**
@@ -679,9 +660,7 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IllegalArgumentException
      *             if an invalid chroot path is specified
      */
-    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher)
-        throws IOException
-    {
+    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher) throws IOException {
         this(connectString, sessionTimeout, watcher, false);
     }
 
@@ -792,11 +771,8 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IllegalArgumentException
      *             if an invalid chroot path is specified
      */
-    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
-            boolean canBeReadOnly, HostProvider aHostProvider)
-            throws IOException {
-        this(connectString, sessionTimeout, watcher, canBeReadOnly,
-                aHostProvider, null);
+    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly, HostProvider aHostProvider) throws IOException {
+        this(connectString, sessionTimeout, watcher, canBeReadOnly, aHostProvider, null);
     }
 
 
@@ -859,11 +835,8 @@ public class ZooKeeper implements AutoCloseable {
      * @throws IllegalArgumentException
      *             if an invalid chroot path is specified
      */
-    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher,
-            boolean canBeReadOnly, HostProvider aHostProvider,
-            ZKClientConfig clientConfig) throws IOException {
-        LOG.info("Initiating client connection, connectString=" + connectString
-                + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
+    public ZooKeeper(String connectString, int sessionTimeout, Watcher watcher, boolean canBeReadOnly, HostProvider aHostProvider, ZKClientConfig clientConfig) throws IOException {
+        LOG.info("Initiating client connection, connectString=" + connectString + " sessionTimeout=" + sessionTimeout + " watcher=" + watcher);
 
         if (clientConfig == null) {
             clientConfig = new ZKClientConfig();
@@ -871,13 +844,10 @@ public class ZooKeeper implements AutoCloseable {
         this.clientConfig = clientConfig;
         watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
-        ConnectStringParser connectStringParser = new ConnectStringParser(
-                connectString);
+        ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
         hostProvider = aHostProvider;
 
-        cnxn = new ClientCnxn(connectStringParser.getChrootPath(),
-                hostProvider, sessionTimeout, this, watchManager,
-                getClientCnxnSocket(), canBeReadOnly);
+        cnxn = new ClientCnxn(connectStringParser.getChrootPath(), hostProvider, sessionTimeout, this, watchManager, getClientCnxnSocket(), canBeReadOnly);
         cnxn.start();
     }
 
@@ -1133,7 +1103,7 @@ public class ZooKeeper implements AutoCloseable {
         this.clientConfig = new ZKClientConfig();
         watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
-       
+
         ConnectStringParser connectStringParser = new ConnectStringParser(
                 connectString);
         hostProvider = aHostProvider;
@@ -1174,7 +1144,7 @@ public class ZooKeeper implements AutoCloseable {
      * reconnecting, use the other constructor which does not require these
      * parameters.
      * <p>
-     * This constructor uses a StaticHostProvider; there is another one  
+     * This constructor uses a StaticHostProvider; there is another one
      * to enable custom behaviour.
      *
      * @param connectString
@@ -1819,7 +1789,7 @@ public class ZooKeeper implements AutoCloseable {
         }
 
         List<OpResult> results = response.getResultList();
-        
+
         ErrorResult fatalError = null;
         for (OpResult result : results) {
             if (result instanceof ErrorResult && ((ErrorResult)result).getErr() != KeeperException.Code.OK.intValue()) {
@@ -2126,7 +2096,7 @@ public class ZooKeeper implements AutoCloseable {
         throws KeeperException, InterruptedException
      {
         final String configZnode = ZooDefs.CONFIG_NODE;
- 
+
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
@@ -2159,7 +2129,7 @@ public class ZooKeeper implements AutoCloseable {
             DataCallback cb, Object ctx)
     {
         final String configZnode = ZooDefs.CONFIG_NODE;
-        
+
         // the watch contains the un-chroot path
         WatchRegistration wcb = null;
         if (watcher != null) {
@@ -2176,7 +2146,7 @@ public class ZooKeeper implements AutoCloseable {
                configZnode, configZnode, ctx, wcb);
     }
 
-    
+
     /**
      * Return the last committed configuration (as known to the server to which the client is connected)
      * and the stat of the configuration.
@@ -2198,10 +2168,10 @@ public class ZooKeeper implements AutoCloseable {
             throws KeeperException, InterruptedException {
         return getConfig(watch ? watchManager.defaultWatcher : null, stat);
     }
- 
+
     /**
-     * The Asynchronous version of getConfig. 
-     * 
+     * The Asynchronous version of getConfig.
+     *
      * @see #getData(String, boolean, Stat)
      */
     public void getConfig(boolean watch, DataCallback cb, Object ctx) {
@@ -2579,7 +2549,7 @@ public class ZooKeeper implements AutoCloseable {
      * if no node with the given path exists.
      *
      * @since 3.3.0
-     * 
+     *
      * @param path
      * @param watcher explicit watcher
      * @param stat stat of the znode designated by path
@@ -2635,7 +2605,7 @@ public class ZooKeeper implements AutoCloseable {
      * if no node with the given path exists.
      *
      * @since 3.3.0
-     * 
+     *
      * @param path
      * @param watch
      * @param stat stat of the znode designated by path
@@ -2654,7 +2624,7 @@ public class ZooKeeper implements AutoCloseable {
      * The asynchronous version of getChildren.
      *
      * @since 3.3.0
-     * 
+     *
      * @see #getChildren(String, Watcher, Stat)
      */
     public void getChildren(final String path, Watcher watcher,
@@ -2685,7 +2655,7 @@ public class ZooKeeper implements AutoCloseable {
      * The asynchronous version of getChildren.
      *
      * @since 3.3.0
-     * 
+     *
      * @see #getChildren(String, boolean, Stat)
      */
     public void getChildren(String path, boolean watch, Children2Callback cb,
@@ -2890,10 +2860,10 @@ public class ZooKeeper implements AutoCloseable {
     /**
      * String representation of this ZooKeeper client. Suitable for things
      * like logging.
-     * 
+     *
      * Do NOT count on the format of this string, it may change without
      * warning.
-     * 
+     *
      * @since 3.3.0
      */
     @Override
@@ -2908,16 +2878,16 @@ public class ZooKeeper implements AutoCloseable {
 
     /*
      * Methods to aid in testing follow.
-     * 
+     *
      * THESE METHODS ARE EXPECTED TO BE USED FOR TESTING ONLY!!!
      */
 
     /**
      * Wait up to wait milliseconds for the underlying threads to shutdown.
      * THIS METHOD IS EXPECTED TO BE USED FOR TESTING ONLY!!!
-     * 
+     *
      * @since 3.3.0
-     * 
+     *
      * @param wait max wait in milliseconds
      * @return true iff all threads are shutdown, otw false
      */
@@ -2939,7 +2909,7 @@ public class ZooKeeper implements AutoCloseable {
      * THIS METHOD IS EXPECTED TO BE USED FOR TESTING ONLY!!!
      *
      * @since 3.3.0
-     * 
+     *
      * @return ip address of the remote side of the connection or null if
      *         not connected
      */
@@ -2947,12 +2917,12 @@ public class ZooKeeper implements AutoCloseable {
         return cnxn.sendThread.getClientCnxnSocket().getRemoteSocketAddress();
     }
 
-    /** 
+    /**
      * Returns the local address to which the socket is bound.
      * THIS METHOD IS EXPECTED TO BE USED FOR TESTING ONLY!!!
      *
      * @since 3.3.0
-     * 
+     *
      * @return ip address of the remote side of the connection or null if
      *         not connected
      */

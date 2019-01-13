@@ -29,7 +29,7 @@ import org.apache.zookeeper.ZooKeeper.ZKWatchManager;
  * Handles the special case of removing watches which has registered for a
  * client path
  */
-public class WatchDeregistration {
+    public class WatchDeregistration {
 
     private final String clientPath;
     private final Watcher watcher;
@@ -37,8 +37,7 @@ public class WatchDeregistration {
     private final boolean local;
     private final ZKWatchManager zkManager;
 
-    public WatchDeregistration(String clientPath, Watcher watcher,
-            WatcherType watcherType, boolean local, ZKWatchManager zkManager) {
+    public WatchDeregistration(String clientPath, Watcher watcher, WatcherType watcherType, boolean local, ZKWatchManager zkManager) {
         this.clientPath = clientPath;
         this.watcher = watcher;
         this.watcherType = watcherType;
@@ -53,10 +52,8 @@ public class WatchDeregistration {
      *            the result code of the operation that attempted to remove
      *            watch on the path.
      */
-    public Map<EventType, Set<Watcher>> unregister(int rc)
-            throws KeeperException {
-        return zkManager.removeWatcher(clientPath, watcher, watcherType, local,
-                rc);
+    public Map<EventType, Set<Watcher>> unregister(int rc) throws KeeperException {
+        return zkManager.removeWatcher(clientPath, watcher, watcherType, local, rc);
     }
 
     /**
