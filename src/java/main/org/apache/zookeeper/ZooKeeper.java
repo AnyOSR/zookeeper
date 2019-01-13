@@ -277,6 +277,8 @@ public class ZooKeeper implements AutoCloseable {
             }
         }
 
+        //从当前manager中移除掉key为clientPath的watcher
+        //并返回移除掉的watch
         public Map<EventType, Set<Watcher>> removeWatcher(String clientPath, Watcher watcher, WatcherType watcherType, boolean local, int rc) throws KeeperException {
             // Validate the provided znode path contains the given watcher of
             // watcherType
@@ -284,42 +286,43 @@ public class ZooKeeper implements AutoCloseable {
 
             Map<EventType, Set<Watcher>> removedWatchers = new HashMap<EventType, Set<Watcher>>();
             HashSet<Watcher> childWatchersToRem = new HashSet<Watcher>();
-            removedWatchers.put(EventType.ChildWatchRemoved, childWatchersToRem);
             HashSet<Watcher> dataWatchersToRem = new HashSet<Watcher>();
+            removedWatchers.put(EventType.ChildWatchRemoved, childWatchersToRem);
             removedWatchers.put(EventType.DataWatchRemoved, dataWatchersToRem);
+
             boolean removedWatcher = false;
             switch (watcherType) {
-            case Children: {
-                synchronized (childWatches) {
-                    removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
+                case Children: {
+                    synchronized (childWatches) {
+                        removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
+                    }
+                    break;
                 }
-                break;
-            }
-            case Data: {
-                synchronized (dataWatches) {
-                    removedWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
-                }
+                case Data: {
+                    synchronized (dataWatches) {
+                        removedWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
+                    }
 
-                synchronized (existWatches) {
-                    boolean removedDataWatcher = removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
-                    removedWatcher |= removedDataWatcher;
+                    synchronized (existWatches) {
+                        boolean removedDataWatcher = removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
+                        removedWatcher |= removedDataWatcher;
+                    }
+                    break;
                 }
-                break;
-            }
-            case Any: {
-                synchronized (childWatches) {
-                    removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
-                }
+                case Any: {
+                    synchronized (childWatches) {
+                        removedWatcher = removeWatches(childWatches, watcher, clientPath, local, rc, childWatchersToRem);
+                    }
 
-                synchronized (dataWatches) {
-                    boolean removedDataWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
-                    removedWatcher |= removedDataWatcher;
+                    synchronized (dataWatches) {
+                        boolean removedDataWatcher = removeWatches(dataWatches, watcher, clientPath, local, rc, dataWatchersToRem);
+                        removedWatcher |= removedDataWatcher;
+                    }
+                    synchronized (existWatches) {
+                        boolean removedDataWatcher = removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
+                        removedWatcher |= removedDataWatcher;
+                    }
                 }
-                synchronized (existWatches) {
-                    boolean removedDataWatcher = removeWatches(existWatches, watcher, clientPath, local, rc, dataWatchersToRem);
-                    removedWatcher |= removedDataWatcher;
-                }
-            }
             }
             // Watcher function doesn't exists for the specified params
             if (!removedWatcher) {
@@ -328,6 +331,7 @@ public class ZooKeeper implements AutoCloseable {
             return removedWatchers;
         }
 
+        // pathVsWatchers在key为path的 Set<Watcher>里是否包含watcherObj
         private boolean contains(String path, Watcher watcherObj, Map<String, Set<Watcher>> pathVsWatchers) {
             boolean watcherExists = true;
             if (pathVsWatchers == null || pathVsWatchers.size() == 0) {
@@ -357,41 +361,44 @@ public class ZooKeeper implements AutoCloseable {
          *            - type of the watcher
          * @throws NoWatcherException
         */
+        // 当前manager中 是否包含watcher
         void containsWatcher(String path, Watcher watcher, WatcherType watcherType) throws NoWatcherException{
             boolean containsWatcher = false;
             switch (watcherType) {
-            case Children: {
-                synchronized (childWatches) {
-                    containsWatcher = contains(path, watcher, childWatches);
+                // Children childWatches
+                case Children: {
+                    synchronized (childWatches) {
+                        containsWatcher = contains(path, watcher, childWatches);
+                    }
+                    break;
                 }
-                break;
-            }
-            case Data: {
-                synchronized (dataWatches) {
-                    containsWatcher = contains(path, watcher, dataWatches);
-                }
+                // Data dataWatches existWatches
+                case Data: {
+                    synchronized (dataWatches) {
+                        containsWatcher = contains(path, watcher, dataWatches);
+                    }
 
-                synchronized (existWatches) {
-                    boolean contains_temp = contains(path, watcher, existWatches);
-                    containsWatcher |= contains_temp;
+                    synchronized (existWatches) {
+                        boolean contains_temp = contains(path, watcher, existWatches);
+                        containsWatcher |= contains_temp;
+                    }
+                    break;
                 }
-                break;
-            }
-            case Any: {
-                synchronized (childWatches) {
-                    containsWatcher = contains(path, watcher, childWatches);
-                }
+                // Any childWatches dataWatches existWatches
+                case Any: {
+                    synchronized (childWatches) {
+                        containsWatcher = contains(path, watcher, childWatches);
+                    }
 
-                synchronized (dataWatches) {
-                    boolean contains_temp = contains(path, watcher, dataWatches);
-                    containsWatcher |= contains_temp;
+                    synchronized (dataWatches) {
+                        boolean contains_temp = contains(path, watcher, dataWatches);
+                        containsWatcher |= contains_temp;
+                    }
+                    synchronized (existWatches) {
+                        boolean contains_temp = contains(path, watcher, existWatches);
+                        containsWatcher |= contains_temp;
+                    }
                 }
-                synchronized (existWatches) {
-                    boolean contains_temp = contains(path, watcher,
-                            existWatches);
-                    containsWatcher |= contains_temp;
-                }
-            }
             }
             // Watcher function doesn't exists for the specified params
             if (!containsWatcher) {
@@ -399,6 +406,8 @@ public class ZooKeeper implements AutoCloseable {
             }
         }
 
+        // 从pathVsWatcher中移除掉key为path的watch
+        //并将其加入到removedWatchers中
         protected boolean removeWatches(Map<String, Set<Watcher>> pathVsWatcher, Watcher watcher, String path, boolean local, int rc, Set<Watcher> removedWatchers) throws KeeperException {
             if (!local && rc != Code.OK.intValue()) {
                 throw KeeperException.create(KeeperException.Code.get(rc), path);
@@ -407,6 +416,7 @@ public class ZooKeeper implements AutoCloseable {
             // When local flag is true, remove watchers for the given path
             // irrespective of rc. Otherwise shouldn't remove watchers locally
             // when sees failure from server.
+            // 当local flag设置以后，remove watch就和resultCode无关了
             if (rc == Code.OK.intValue() || (local && rc != Code.OK.intValue())) {
                 // Remove all the watchers for the given path
                 if (watcher == null) {
@@ -438,78 +448,77 @@ public class ZooKeeper implements AutoCloseable {
          * @see org.apache.zookeeper.ClientWatchManager#materialize(Event.KeeperState,
          *                                                        Event.EventType, java.lang.String)
          */
+        // 返回需要触发的watcher，并移除
         @Override
         public Set<Watcher> materialize(Watcher.Event.KeeperState state, Watcher.Event.EventType type, String clientPath) {
             Set<Watcher> result = new HashSet<Watcher>();
 
             switch (type) {
-            case None:
-                result.add(defaultWatcher);
-                boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
-                synchronized(dataWatches) {
-                    for(Set<Watcher> ws: dataWatches.values()) {
-                        result.addAll(ws);
-                    }
-                    if (clear) {
-                        dataWatches.clear();
-                    }
-                }
 
-                synchronized(existWatches) {
-                    for(Set<Watcher> ws: existWatches.values()) {
-                        result.addAll(ws);
+                case None:
+                    result.add(defaultWatcher);
+                    boolean clear = disableAutoWatchReset && state != Watcher.Event.KeeperState.SyncConnected;
+                    synchronized(dataWatches) {
+                        for(Set<Watcher> ws: dataWatches.values()) {
+                            result.addAll(ws);
+                        }
+                        if (clear) {
+                            dataWatches.clear();
+                        }
                     }
-                    if (clear) {
-                        existWatches.clear();
+                    synchronized(existWatches) {
+                        for(Set<Watcher> ws: existWatches.values()) {
+                            result.addAll(ws);
+                        }
+                        if (clear) {
+                            existWatches.clear();
+                        }
                     }
-                }
+                    synchronized(childWatches) {
+                        for(Set<Watcher> ws: childWatches.values()) {
+                            result.addAll(ws);
+                        }
+                        if (clear) {
+                            childWatches.clear();
+                        }
+                    }
+                    return result;
 
-                synchronized(childWatches) {
-                    for(Set<Watcher> ws: childWatches.values()) {
-                        result.addAll(ws);
+                case NodeDataChanged:
+                case NodeCreated:
+                    synchronized (dataWatches) {
+                        addTo(dataWatches.remove(clientPath), result);
                     }
-                    if (clear) {
-                        childWatches.clear();
+                    synchronized (existWatches) {
+                        addTo(existWatches.remove(clientPath), result);
                     }
-                }
-
-                return result;
-            case NodeDataChanged:
-            case NodeCreated:
-                synchronized (dataWatches) {
-                    addTo(dataWatches.remove(clientPath), result);
-                }
-                synchronized (existWatches) {
-                    addTo(existWatches.remove(clientPath), result);
-                }
-                break;
-            case NodeChildrenChanged:
-                synchronized (childWatches) {
-                    addTo(childWatches.remove(clientPath), result);
-                }
-                break;
-            case NodeDeleted:
-                synchronized (dataWatches) {
-                    addTo(dataWatches.remove(clientPath), result);
-                }
-                // XXX This shouldn't be needed, but just in case
-                synchronized (existWatches) {
-                    Set<Watcher> list = existWatches.remove(clientPath);
-                    if (list != null) {
-                        addTo(list, result);
-                        LOG.warn("We are triggering an exists watch for delete! Shouldn't happen!");
+                    break;
+                case NodeChildrenChanged:
+                    synchronized (childWatches) {
+                        addTo(childWatches.remove(clientPath), result);
                     }
-                }
-                synchronized (childWatches) {
-                    addTo(childWatches.remove(clientPath), result);
-                }
-                break;
-            default:
-                String msg = "Unhandled watch event type " + type + " with state " + state + " on path " + clientPath;
-                LOG.error(msg);
-                throw new RuntimeException(msg);
+                    break;
+                case NodeDeleted:
+                    synchronized (dataWatches) {
+                        addTo(dataWatches.remove(clientPath), result);
+                    }
+                    // XXX This shouldn't be needed, but just in case
+                    synchronized (existWatches) {
+                        Set<Watcher> list = existWatches.remove(clientPath);
+                        if (list != null) {
+                            addTo(list, result);
+                            LOG.warn("We are triggering an exists watch for delete! Shouldn't happen!");
+                        }
+                    }
+                    synchronized (childWatches) {
+                        addTo(childWatches.remove(clientPath), result);
+                    }
+                    break;
+                default:
+                    String msg = "Unhandled watch event type " + type + " with state " + state + " on path " + clientPath;
+                    LOG.error(msg);
+                    throw new RuntimeException(msg);
             }
-
             return result;
         }
     }

@@ -246,7 +246,7 @@ public class ClientCnxn {
         if (p.watchRegistration != null) {
             p.watchRegistration.register(err);
         }
-        // Add all the removed watch events to the event queue, so that the
+        // Add all the removed watch events to the event queue, so that the          将所有移除的watch 添加到eventQueue，客户端就能收到Data/Child WatchRemoved 事件类型的event
         // clients will be notified with 'Data/Child WatchRemoved' event type.
         if (p.watchDeregistration != null) {
             Map<EventType, Set<Watcher>> materializedWatchers = null;
@@ -279,8 +279,11 @@ public class ClientCnxn {
         }
     }
 
+    // 太割裂了
     void queueEvent(String clientPath, int err, Set<Watcher> materializedWatchers, EventType eventType) {
         KeeperState sessionState = KeeperState.SyncConnected;
+
+        //session过期或者连接失效
         if (KeeperException.Code.SESSIONEXPIRED.intValue() == err || KeeperException.Code.CONNECTIONLOSS.intValue() == err) {
             sessionState = Event.KeeperState.Disconnected;
         }
@@ -292,6 +295,7 @@ public class ClientCnxn {
         eventThread.queueCallback(cb, rc, path, ctx);
     }
 
+    // connectionLossPacket
     private void conLossPacket(Packet p) {
         if (p.replyHeader == null) {
             return;
@@ -321,8 +325,7 @@ public class ClientCnxn {
      */
     public void disconnect() {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Disconnecting client for session: 0x"
-                    + Long.toHexString(getSessionId()));
+            LOG.debug("Disconnecting client for session: 0x" + Long.toHexString(getSessionId()));
         }
 
         sendThread.close();
@@ -340,8 +343,7 @@ public class ClientCnxn {
      */
     public void close() throws IOException {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Closing client for session: 0x"
-                    + Long.toHexString(getSessionId()));
+            LOG.debug("Closing client for session: 0x" + Long.toHexString(getSessionId()));
         }
 
         try {
@@ -364,19 +366,13 @@ public class ClientCnxn {
         return xid++;
     }
 
-    public ReplyHeader submitRequest(RequestHeader h, Record request,
-                                     Record response, WatchRegistration watchRegistration)
-            throws InterruptedException {
+    public ReplyHeader submitRequest(RequestHeader h, Record request, Record response, WatchRegistration watchRegistration) throws InterruptedException {
         return submitRequest(h, request, response, watchRegistration, null);
     }
 
-    public ReplyHeader submitRequest(RequestHeader h, Record request,
-                                     Record response, WatchRegistration watchRegistration,
-                                     WatchDeregistration watchDeregistration)
-            throws InterruptedException {
+    public ReplyHeader submitRequest(RequestHeader h, Record request, Record response, WatchRegistration watchRegistration, WatchDeregistration watchDeregistration) throws InterruptedException {
         ReplyHeader r = new ReplyHeader();
-        Packet packet = queuePacket(h, r, request, response, null, null, null,
-                null, watchRegistration, watchDeregistration);
+        Packet packet = queuePacket(h, r, request, response, null, null, null, null, watchRegistration, watchDeregistration);
         synchronized (packet) {
             while (!packet.finished) {
                 packet.wait();
@@ -389,8 +385,7 @@ public class ClientCnxn {
         sendThread.getClientCnxnSocket().saslCompleted();
     }
 
-    public void sendPacket(Record request, Record response, AsyncCallback cb, int opCode)
-            throws IOException {
+    public void sendPacket(Record request, Record response, AsyncCallback cb, int opCode) throws IOException {
         // Generate Xid now because it will be sent immediately,
         // by call to sendThread.sendPacket() below.
         int xid = getXid();
@@ -409,8 +404,7 @@ public class ClientCnxn {
     public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
                               Record response, AsyncCallback cb, String clientPath,
                               String serverPath, Object ctx, WatchRegistration watchRegistration) {
-        return queuePacket(h, r, request, response, cb, clientPath, serverPath,
-                ctx, watchRegistration, null);
+        return queuePacket(h, r, request, response, cb, clientPath, serverPath, ctx, watchRegistration, null);
     }
 
     public Packet queuePacket(RequestHeader h, ReplyHeader r, Record request,
