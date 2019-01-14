@@ -18,6 +18,13 @@
 
 package org.apache.zookeeper;
 
+import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
+import org.apache.zookeeper.ClientCnxn.Packet;
+import org.apache.zookeeper.ZooDefs.OpCode;
+import org.apache.zookeeper.client.ZKClientConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -31,16 +38,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import org.apache.zookeeper.ClientCnxn.EndOfStreamException;
-import org.apache.zookeeper.ClientCnxn.Packet;
-import org.apache.zookeeper.ZooDefs.OpCode;
-import org.apache.zookeeper.client.ZKClientConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class ClientCnxnSocketNIO extends ClientCnxnSocket {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(ClientCnxnSocketNIO.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClientCnxnSocketNIO.class);
 
     private final Selector selector = Selector.open();
 
@@ -65,8 +64,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
      * @throws InterruptedException
      * @throws IOException
      */
-    void doIO(List<Packet> pendingQueue, ClientCnxn cnxn)
-      throws InterruptedException, IOException {
+    void doIO(List<Packet> pendingQueue, ClientCnxn cnxn) throws InterruptedException, IOException {
         SocketChannel sock = (SocketChannel) sockKey.channel();
         if (sock == null) {
             throw new IOException("Socket is null!");
@@ -74,22 +72,18 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         if (sockKey.isReadable()) {
             int rc = sock.read(incomingBuffer);
             if (rc < 0) {
-                throw new EndOfStreamException(
-                        "Unable to read additional data from server sessionid 0x"
-                                + Long.toHexString(sessionId)
-                                + ", likely server has closed socket");
+                throw new EndOfStreamException("Unable to read additional data from server sessionid 0x" + Long.toHexString(sessionId) + ", likely server has closed socket");
             }
-            if (!incomingBuffer.hasRemaining()) {
+            if (!incomingBuffer.hasRemaining()) {  // 如果incomingBuffer已经填满了，收到了一个完整的数据包，或者收到了一个新包
                 incomingBuffer.flip();
-                if (incomingBuffer == lenBuffer) {
+                if (incomingBuffer == lenBuffer) {   // 收到了一个新包
                     recvCount++;
-                    readLength();
-                } else if (!initialized) {
+                    readLength();                    // 读取长度字段
+                } else if (!initialized) {           // 如果还没有初始化，则接收到的是connect的包
                     readConnectResult();
                     enableRead();
-                    if (findSendablePacket(outgoingQueue,
-                            sendThread.tunnelAuthInProgress()) != null) {
-                        // Since SASL authentication has completed (if client is configured to do so),
+                    if (findSendablePacket(outgoingQueue, sendThread.tunnelAuthInProgress()) != null) {
+                        // Since SASL authentication has completed (if client is configured to do so),     认证完了之后才可以发送
                         // outgoing packets waiting in the outgoingQueue can now be sent.
                         enableWrite();
                     }
@@ -98,7 +92,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                     updateLastHeard();
                     initialized = true;
                 } else {
-                    sendThread.readResponse(incomingBuffer);
+                    sendThread.readResponse(incomingBuffer);   // 否则对响应进行处理
                     lenBuffer.clear();
                     incomingBuffer = lenBuffer;
                     updateLastHeard();
@@ -106,27 +100,24 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             }
         }
         if (sockKey.isWritable()) {
-            Packet p = findSendablePacket(outgoingQueue,
-                    sendThread.tunnelAuthInProgress());
+            Packet p = findSendablePacket(outgoingQueue, sendThread.tunnelAuthInProgress());
 
             if (p != null) {
                 updateLastSend();
-                // If we already started writing p, p.bb will already exist
+                // If we already started writing p, p.bb will already exist     刚开始packet的bb应该是没有被create的，所以才说，如果已经开始写了，则p.bb肯定已经存在了
                 if (p.bb == null) {
-                    if ((p.requestHeader != null) &&
-                            (p.requestHeader.getType() != OpCode.ping) &&
-                            (p.requestHeader.getType() != OpCode.auth)) {
+                    if ((p.requestHeader != null)
+                            && (p.requestHeader.getType() != OpCode.ping)
+                            && (p.requestHeader.getType() != OpCode.auth)) {
                         p.requestHeader.setXid(cnxn.getXid());
                     }
                     p.createBB();
                 }
                 sock.write(p.bb);
-                if (!p.bb.hasRemaining()) {
+                if (!p.bb.hasRemaining()) { //如果写完了
                     sentCount++;
                     outgoingQueue.removeFirstOccurrence(p);
-                    if (p.requestHeader != null
-                            && p.requestHeader.getType() != OpCode.ping
-                            && p.requestHeader.getType() != OpCode.auth) {
+                    if (p.requestHeader != null && p.requestHeader.getType() != OpCode.ping && p.requestHeader.getType() != OpCode.auth) {
                         synchronized (pendingQueue) {
                             pendingQueue.add(p);
                         }
@@ -134,19 +125,19 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 }
             }
             if (outgoingQueue.isEmpty()) {
-                // No more packets to send: turn off write interest flag.
-                // Will be turned on later by a later call to enableWrite(),
+                // No more packets to send: turn off write interest flag.       没有packet可写了，关闭掉write interest
+                // Will be turned on later by a later call to enableWrite(),    之后会由enableWrite()开启
                 // from within ZooKeeperSaslClient (if client is configured
                 // to attempt SASL authentication), or in either doIO() or
                 // in doTransport() if not.
                 disableWrite();
             } else if (!initialized && p != null && !p.bb.hasRemaining()) {
-                // On initial connection, write the complete connect request
-                // packet, but then disable further writes until after
+                // On initial connection, write the complete connect request    初始连接的时候，写connect request
+                // packet, but then disable further writes until after          然后disable write interest，直到接收到一个成功的连接响应
                 // receiving a successful connection response.  If the
-                // session is expired, then the server sends the expiration
+                // session is expired, then the server sends the expiration      如果session过期，那么server会发送 过期响应，关闭socket连接
                 // response and immediately closes its end of the socket.  If
-                // the client is simultaneously writing on its end, then the
+                // the client is simultaneously writing on its end, then the       如果client此时正在写数据，那么TCP栈会发送复位报文，这种情况下，client永远收不到session 过期事件
                 // TCP stack may choose to abort with RST, in which case the
                 // client would never receive the session expired event.  See
                 // http://docs.oracle.com/javase/6/docs/technotes/guides/net/articles/connection_release.html
@@ -158,8 +149,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         }
     }
 
-    private Packet findSendablePacket(LinkedBlockingDeque<Packet> outgoingQueue,
-                                      boolean tunneledAuthInProgres) {
+    private Packet findSendablePacket(LinkedBlockingDeque<Packet> outgoingQueue, boolean tunneledAuthInProgres) {
         if (outgoingQueue.isEmpty()) {
             return null;
         }
@@ -167,15 +157,15 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
         if (outgoingQueue.getFirst().bb != null || !tunneledAuthInProgres) {
             return outgoingQueue.getFirst();
         }
-        // Since client's authentication with server is in progress,
-        // send only the null-header packet queued by primeConnection().
+        // Since client's authentication with server is in progress,            由于客户端的授权正在进行
+        // send only the null-header packet queued by primeConnection().        primeConnection()会阻塞别的包   null-header
         // This packet must be sent so that the SASL authentication process
         // can proceed, but all other packets should wait until
         // SASL authentication completes.
         Iterator<Packet> iter = outgoingQueue.iterator();
         while (iter.hasNext()) {
             Packet p = iter.next();
-            if (p.requestHeader == null) {
+            if (p.requestHeader == null) {                                     // 如果header为null
                 // We've found the priming-packet. Move it to the beginning of the queue.
                 iter.remove();
                 outgoingQueue.addFirst(p);
@@ -205,8 +195,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
                 sock.socket().shutdownOutput();
             } catch (IOException e) {
                 if (LOG.isDebugEnabled()) {
-                    LOG.debug("Ignoring exception during shutdown output",
-                            e);
+                    LOG.debug("Ignoring exception during shutdown output", e);
                 }
             }
             try {
@@ -269,21 +258,20 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
      * @param addr the address of remote host
      * @throws IOException
      */
-    void registerAndConnect(SocketChannel sock, InetSocketAddress addr) 
-    throws IOException {
+    void registerAndConnect(SocketChannel sock, InetSocketAddress addr) throws IOException {
         sockKey = sock.register(selector, SelectionKey.OP_CONNECT);
         boolean immediateConnect = sock.connect(addr);
         if (immediateConnect) {
             sendThread.primeConnection();
         }
     }
-    
+
     @Override
     void connect(InetSocketAddress addr) throws IOException {
         SocketChannel sock = createSock();
         try {
-           registerAndConnect(sock, addr);
-      } catch (IOException e) {
+            registerAndConnect(sock, addr);
+        } catch (IOException e) {
             LOG.error("Unable to open socket to " + addr);
             sock.close();
             throw e;
@@ -340,14 +328,13 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
     }
     
     @Override
-    void doTransport(int waitTimeOut, List<Packet> pendingQueue, ClientCnxn cnxn)
-            throws IOException, InterruptedException {
+    void doTransport(int waitTimeOut, List<Packet> pendingQueue, ClientCnxn cnxn) throws IOException, InterruptedException {
         selector.select(waitTimeOut);
         Set<SelectionKey> selected;
         synchronized (this) {
             selected = selector.selectedKeys();
         }
-        // Everything below and until we get back to the select is
+        // Everything below and until we get back to the select is            下面的操作都是非阻塞的
         // non blocking, so time is effectively a constant. That is
         // Why we just have to do this once, here
         updateNow();
@@ -364,8 +351,7 @@ public class ClientCnxnSocketNIO extends ClientCnxnSocket {
             }
         }
         if (sendThread.getZkState().isConnected()) {
-            if (findSendablePacket(outgoingQueue,
-                    sendThread.tunnelAuthInProgress()) != null) {
+            if (findSendablePacket(outgoingQueue, sendThread.tunnelAuthInProgress()) != null) {
                 enableWrite();
             }
         }

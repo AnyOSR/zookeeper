@@ -448,8 +448,7 @@ public class ClientCnxn {
         }
         authInfo.add(new AuthData(scheme, auth));
         queuePacket(new RequestHeader(-4, OpCode.auth), null,
-                new AuthPacket(0, scheme, auth), null, null, null, null,
-                null, null);
+                new AuthPacket(0, scheme, auth), null, null, null, null, null, null);
     }
 
     States getState() {
@@ -964,7 +963,7 @@ public class ClientCnxn {
         }
 
         /**
-         * Setup session, previous watches, authentication.
+         * Setup session, previous watches, authentication.     构建session，之前的watch 认证
          */
         void primeConnection() throws IOException {
             LOG.info("Socket connection established, initiating session, client: {}, server: {}", clientCnxnSocket.getLocalSocketAddress(), clientCnxnSocket.getRemoteSocketAddress());
@@ -1010,10 +1009,7 @@ public class ClientCnxn {
                             batchLength += watch.length();
                         }
 
-                        SetWatches sw = new SetWatches(setWatchesLastZxid,
-                                dataWatchesBatch,
-                                existWatchesBatch,
-                                childWatchesBatch);
+                        SetWatches sw = new SetWatches(setWatchesLastZxid, dataWatchesBatch, existWatchesBatch, childWatchesBatch);
                         RequestHeader header = new RequestHeader(-8, OpCode.setWatches);
                         Packet packet = new Packet(header, new ReplyHeader(), sw, null, null);
                         outgoingQueue.addFirst(packet);
@@ -1022,9 +1018,9 @@ public class ClientCnxn {
             }
 
             for (AuthData id : authInfo) {
-                outgoingQueue.addFirst(new Packet(new RequestHeader(-4,
-                        OpCode.auth), null, new AuthPacket(0, id.scheme, id.data), null, null));
+                outgoingQueue.addFirst(new Packet(new RequestHeader(-4, OpCode.auth), null, new AuthPacket(0, id.scheme, id.data), null, null));
             }
+
             outgoingQueue.addFirst(new Packet(null, null, conReq, null, null, readOnly));
             clientCnxnSocket.connectionPrimed();
             if (LOG.isDebugEnabled()) {
@@ -1116,7 +1112,7 @@ public class ClientCnxn {
             InetSocketAddress serverAddress = null;
             while (state.isAlive()) {
                 try {
-                    if (!clientCnxnSocket.isConnected()) {
+                    if (!clientCnxnSocket.isConnected()) {                       // 如果连接失效
                         // don't re-establish connection if we are closing
                         if (closing) {
                             break;
@@ -1157,10 +1153,9 @@ public class ClientCnxn {
                                 }
                             }
 
+                            // 认证失败
                             if (sendAuthEvent == true) {
-                                eventThread.queueEvent(new WatchedEvent(
-                                        Watcher.Event.EventType.None,
-                                        authState, null));
+                                eventThread.queueEvent(new WatchedEvent(Watcher.Event.EventType.None, authState, null));
                             }
                         }
                         to = readTimeout - clientCnxnSocket.getIdleRecv();
@@ -1178,7 +1173,7 @@ public class ClientCnxn {
                         //1000(1 second) is to prevent race condition missing to send the second ping
                         //also make sure not to send too many pings when readTimeout is small
                         int timeToNextPing = readTimeout / 2 - clientCnxnSocket.getIdleSend() - ((clientCnxnSocket.getIdleSend() > 1000) ? 1000 : 0);
-                        //send a ping request either time is due or no packet sent out within MAX_SEND_PING_INTERVAL
+                        //send a ping request either time is due or no packet sent out within MAX_SEND_PING_INTERVAL   时间到期或者在MAX_SEND_PING_INTERVAL内没发送过packet，则发送ping
                         if (timeToNextPing <= 0 || clientCnxnSocket.getIdleSend() > MAX_SEND_PING_INTERVAL) {
                             sendPing();
                             clientCnxnSocket.updateLastSend();

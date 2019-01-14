@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A ClientCnxnSocket does the lower level communication with a socket
+ * A ClientCnxnSocket does the lower level communication with a socket                   底层通讯
  * implementation.
  * 
  * This code has been moved out of ClientCnxn so that a Netty implementation can
@@ -55,7 +55,7 @@ abstract class ClientCnxnSocket {
     protected final ByteBuffer lenBuffer = ByteBuffer.allocateDirect(4);
 
     /**
-     * After the length is read, a new incomingBuffer is allocated in
+     * After the length is read, a new incomingBuffer is allocated in         读取到长度之后，incomingBuffer会被分配length长度的bytebuffer
      * readLength() to receive the full message.
      */
     protected ByteBuffer incomingBuffer = lenBuffer;
@@ -70,7 +70,7 @@ abstract class ClientCnxnSocket {
     private int packetLen = ZKClientConfig.CLIENT_MAX_PACKET_LENGTH_DEFAULT;
 
     /**
-     * The sessionId is only available here for Log and Exception messages.
+     * The sessionId is only available here for Log and Exception messages.    只是为了记录日志和 异常消息
      * Otherwise the socket doesn't need to know it.
      */
     protected long sessionId;
@@ -114,6 +114,7 @@ abstract class ClientCnxnSocket {
         this.lastHeard = now;
     }
 
+    //只能在填充了长度buffer之后调用
     protected void readLength() throws IOException {
         int len = incomingBuffer.getInt();
         if (len < 0 || len >= packetLen) {
@@ -134,7 +135,7 @@ abstract class ClientCnxnSocket {
         ByteBufferInputStream bbis = new ByteBufferInputStream(incomingBuffer);
         BinaryInputArchive bbia = BinaryInputArchive.getArchive(bbis);
         ConnectResponse conRsp = new ConnectResponse();
-        conRsp.deserialize(bbia, "connect");
+        conRsp.deserialize(bbia, "connect");         // 反序列化
 
         // read "is read-only" flag
         boolean isRO = false;
@@ -193,9 +194,9 @@ abstract class ClientCnxnSocket {
 
     /**
      * Do transportation work:
-     * - read packets into incomingBuffer.
-     * - write outgoing queue packets.
-     * - update relevant timestamp.
+     * - read packets into incomingBuffer.                     读packet到incomingBuffer
+     * - write outgoing queue packets.                         写outgoing queue packet
+     * - update relevant timestamp.                            更新相关时间戳
      *
      * @param waitTimeOut timeout in blocking wait. Unit in MilliSecond.
      * @param pendingQueue These are the packets that have been sent and

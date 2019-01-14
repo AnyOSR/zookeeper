@@ -152,14 +152,11 @@ public final class StaticHostProvider implements HostProvider {
 
 
     @Override
-    public synchronized boolean updateServerList(
-            Collection<InetSocketAddress> serverAddresses,
-            InetSocketAddress currentHost) {
+    public synchronized boolean updateServerList(Collection<InetSocketAddress> serverAddresses, InetSocketAddress currentHost) {
         // Resolve server addresses and shuffle them
         List<InetSocketAddress> resolvedList = resolveAndShuffle(serverAddresses);
         if (resolvedList.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "A HostProvider may not be empty!");
+            throw new IllegalArgumentException("A HostProvider may not be empty!");
         }
         // Check if client's current server is in the new list of servers
         boolean myServerInNewConfig = false;
@@ -184,11 +181,8 @@ public final class StaticHostProvider implements HostProvider {
         }
 
         for (InetSocketAddress addr : resolvedList) {
-            if (addr.getPort() == myServer.getPort()
-                    && ((addr.getAddress() != null
-                            && myServer.getAddress() != null && addr
-                            .getAddress().equals(myServer.getAddress())) || addr
-                            .getHostString().equals(myServer.getHostString()))) {
+            if (addr.getPort() == myServer.getPort() &&
+                    ((addr.getAddress() != null && myServer.getAddress() != null && addr.getAddress().equals(myServer.getAddress())) || addr.getHostString().equals(myServer.getHostString()))) {
                 myServerInNewConfig = true;
                 break;
             }
@@ -217,8 +211,7 @@ public final class StaticHostProvider implements HostProvider {
                 // my server is in new config, but load should be decreased.
                 // Need to decide if this client
                 // is moving to one of the new servers
-                if (sourceOfRandomness.nextFloat() <= (1 - ((float) this.serverAddresses
-                        .size()) / (numOld + numNew))) {
+                if (sourceOfRandomness.nextFloat() <= (1 - ((float) this.serverAddresses.size()) / (numOld + numNew))) {
                     pNew = 1;
                     pOld = 0;
                 } else {
@@ -238,8 +231,7 @@ public final class StaticHostProvider implements HostProvider {
                 // stay with this server and do nothing special
                 reconfigMode = false;
             } else {
-                pOld = ((float) (numOld * (this.serverAddresses.size() - (numOld + numNew))))
-                        / ((numOld + numNew) * (this.serverAddresses.size() - numOld));
+                pOld = ((float) (numOld * (this.serverAddresses.size() - (numOld + numNew)))) / ((numOld + numNew) * (this.serverAddresses.size() - numOld));
                 pNew = 1 - pOld;
             }
         }
