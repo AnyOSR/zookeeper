@@ -1060,7 +1060,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         try {
             jmxQuorumBean = new QuorumBean(this);
             MBeanRegistry.getInstance().register(jmxQuorumBean, null);
-            for(QuorumServer s: getView().values()){
+            for (QuorumServer s : getView().values()) {
                 ZKMBeanInfo p;
                 if (getId() == s.id) {
                     p = jmxLocalPeerBean = new LocalPeerBean(this);
@@ -1091,109 +1091,109 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
              */
             while (running) {
                 switch (getPeerState()) {
-                case LOOKING:
-                    LOG.info("LOOKING");
+                    case LOOKING:
+                        LOG.info("LOOKING");
 
-                    if (Boolean.getBoolean("readonlymode.enabled")) {
-                        LOG.info("Attempting to start ReadOnlyZooKeeperServer");
+                        if (Boolean.getBoolean("readonlymode.enabled")) {
+                            LOG.info("Attempting to start ReadOnlyZooKeeperServer");
 
-                        // Create read-only server but don't start it immediately
-                        final ReadOnlyZooKeeperServer roZk = new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
-    
-                        // Instead of starting roZk immediately, wait some grace
-                        // period before we decide we're partitioned.
-                        //
-                        // Thread is used here because otherwise it would require
-                        // changes in each of election strategy classes which is
-                        // unnecessary code coupling.
-                        Thread roZkMgr = new Thread() {
-                            public void run() {
-                                try {
-                                    // lower-bound grace period to 2 secs
-                                    sleep(Math.max(2000, tickTime));
-                                    if (ServerState.LOOKING.equals(getPeerState())) {
-                                        roZk.startup();
+                            // Create read-only server but don't start it immediately
+                            final ReadOnlyZooKeeperServer roZk = new ReadOnlyZooKeeperServer(logFactory, this, this.zkDb);
+
+                            // Instead of starting roZk immediately, wait some grace
+                            // period before we decide we're partitioned.
+                            //
+                            // Thread is used here because otherwise it would require
+                            // changes in each of election strategy classes which is
+                            // unnecessary code coupling.
+                            Thread roZkMgr = new Thread() {
+                                public void run() {
+                                    try {
+                                        // lower-bound grace period to 2 secs
+                                        sleep(Math.max(2000, tickTime));
+                                        if (ServerState.LOOKING.equals(getPeerState())) {
+                                            roZk.startup();
+                                        }
+                                    } catch (InterruptedException e) {
+                                        LOG.info("Interrupted while attempting to start ReadOnlyZooKeeperServer, not started");
+                                    } catch (Exception e) {
+                                        LOG.error("FAILED to start ReadOnlyZooKeeperServer", e);
                                     }
-                                } catch (InterruptedException e) {
-                                    LOG.info("Interrupted while attempting to start ReadOnlyZooKeeperServer, not started");
-                                } catch (Exception e) {
-                                    LOG.error("FAILED to start ReadOnlyZooKeeperServer", e);
                                 }
+                            };
+                            try {
+                                roZkMgr.start();
+                                reconfigFlagClear();
+                                if (shuttingDownLE) {
+                                    shuttingDownLE = false;
+                                    startLeaderElection();
+                                }
+                                setCurrentVote(makeLEStrategy().lookForLeader());
+                            } catch (Exception e) {
+                                LOG.warn("Unexpected exception", e);
+                                setPeerState(ServerState.LOOKING);
+                            } finally {
+                                // If the thread is in the the grace period, interrupt
+                                // to come out of waiting.
+                                roZkMgr.interrupt();
+                                roZk.shutdown();
                             }
-                        };
+                        } else {
+                            try {
+                                reconfigFlagClear();
+                                if (shuttingDownLE) {
+                                    shuttingDownLE = false;
+                                    startLeaderElection();
+                                }
+                                setCurrentVote(makeLEStrategy().lookForLeader());
+                            } catch (Exception e) {
+                                LOG.warn("Unexpected exception", e);
+                                setPeerState(ServerState.LOOKING);
+                            }
+                        }
+                        break;
+                    case OBSERVING:
                         try {
-                            roZkMgr.start();
-                            reconfigFlagClear();
-                            if (shuttingDownLE) {
-                                shuttingDownLE = false;
-                                startLeaderElection();
-                            }
-                            setCurrentVote(makeLEStrategy().lookForLeader());
+                            LOG.info("OBSERVING");
+                            setObserver(makeObserver(logFactory));
+                            observer.observeLeader();
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
-                            setPeerState(ServerState.LOOKING);
                         } finally {
-                            // If the thread is in the the grace period, interrupt
-                            // to come out of waiting.
-                            roZkMgr.interrupt();
-                            roZk.shutdown();
+                            observer.shutdown();
+                            setObserver(null);
+                            updateServerState();
                         }
-                    } else {
+                        break;
+                    case FOLLOWING:
                         try {
-                           reconfigFlagClear();
-                            if (shuttingDownLE) {
-                               shuttingDownLE = false;
-                               startLeaderElection();
-                               }
-                            setCurrentVote(makeLEStrategy().lookForLeader());
+                            LOG.info("FOLLOWING");
+                            setFollower(makeFollower(logFactory));
+                            follower.followLeader();
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);
-                            setPeerState(ServerState.LOOKING);
-                        }                        
-                    }
-                    break;
-                case OBSERVING:
-                    try {
-                        LOG.info("OBSERVING");
-                        setObserver(makeObserver(logFactory));
-                        observer.observeLeader();
-                    } catch (Exception e) {
-                        LOG.warn("Unexpected exception",e );
-                    } finally {
-                        observer.shutdown();
-                        setObserver(null);  
-                       updateServerState();
-                    }
-                    break;
-                case FOLLOWING:
-                    try {
-                       LOG.info("FOLLOWING");
-                        setFollower(makeFollower(logFactory));
-                        follower.followLeader();
-                    } catch (Exception e) {
-                       LOG.warn("Unexpected exception",e);
-                    } finally {
-                       follower.shutdown();
-                       setFollower(null);
-                       updateServerState();
-                    }
-                    break;
-                case LEADING:
-                    LOG.info("LEADING");
-                    try {
-                        setLeader(makeLeader(logFactory));
-                        leader.lead();
-                        setLeader(null);
-                    } catch (Exception e) {
-                        LOG.warn("Unexpected exception",e);
-                    } finally {
-                        if (leader != null) {
-                            leader.shutdown("Forcing shutdown");
-                            setLeader(null);
+                        } finally {
+                            follower.shutdown();
+                            setFollower(null);
+                            updateServerState();
                         }
-                        updateServerState();
-                    }
-                    break;
+                        break;
+                    case LEADING:
+                        LOG.info("LEADING");
+                        try {
+                            setLeader(makeLeader(logFactory));
+                            leader.lead();
+                            setLeader(null);
+                        } catch (Exception e) {
+                            LOG.warn("Unexpected exception", e);
+                        } finally {
+                            if (leader != null) {
+                                leader.shutdown("Forcing shutdown");
+                                setLeader(null);
+                            }
+                            updateServerState();
+                        }
+                        break;
                 }
                 start_fle = Time.currentElapsedTime();
             }
