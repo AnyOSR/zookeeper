@@ -494,7 +494,7 @@ public class LearnerHandler extends ZooKeeperThread {
             if(LOG.isDebugEnabled()){
             	LOG.debug("Received NEWLEADER-ACK message from " + sid);   
             }
-            leader.waitForNewLeaderAck(getSid(), qp.getZxid());
+            leader.waitForNewLeaderAck(getSid(), qp.getZxid());     // 等待大部分NewLeader的ACK信息
 
             syncLimitCheck.start();
             
@@ -843,7 +843,6 @@ public class LearnerHandler extends ZooKeeperThread {
                     needOpPacket = false;
                 }
             }
-            // packetZxid >= peerLastZxid
             if (packetZxid <= queuedZxid) {
                 // We can get here, if we don't have op packet to queue
                 // or there is a duplicate txn in a given iterator
