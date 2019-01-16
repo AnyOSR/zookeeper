@@ -1947,8 +1947,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     }
 
     private void updateThreadName() {
-        String plain = cnxnFactory != null ? cnxnFactory.getLocalAddress() != null ?
-                        cnxnFactory.getLocalAddress().toString() : "disabled" : "disabled";
+        String plain = cnxnFactory != null ? cnxnFactory.getLocalAddress() != null ? cnxnFactory.getLocalAddress().toString() : "disabled" : "disabled";
         String secure = secureCnxnFactory != null ? secureCnxnFactory.getLocalAddress().toString() : "disabled";
         setName(String.format("QuorumPeer[myid=%d](plain=%s)(secure=%s)", getId(), plain, secure));
     }
