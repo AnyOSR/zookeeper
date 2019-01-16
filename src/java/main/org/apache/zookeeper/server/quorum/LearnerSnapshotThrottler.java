@@ -92,10 +92,10 @@ public class LearnerSnapshotThrottler {
                 long timestamp = Time.currentElapsedTime();
                 do {
                     snapCountSyncObject.wait(timeoutMillis);
-                } while (snapsInProgress >= maxConcurrentSnapshots && timestamp + timeoutMillis < Time.currentElapsedTime());
+                } while (snapsInProgress >= maxConcurrentSnapshots && timestamp + timeoutMillis < Time.currentElapsedTime());     // 超时或者 小于maxConcurrentSnapshots
             }
 
-            if (essential || snapsInProgress < maxConcurrentSnapshots) {
+            if (essential || snapsInProgress < maxConcurrentSnapshots) {           // 占一个坑
                 snapsInProgress++;
                 snapshotNumber = snapsInProgress;
             } else {
@@ -111,7 +111,7 @@ public class LearnerSnapshotThrottler {
      */
     public void endSnapshot() {
         int newCount;
-        synchronized (snapCountSyncObject) {
+        synchronized (snapCountSyncObject) {            // 减一个坑
             snapsInProgress--;
             newCount = snapsInProgress;
             snapCountSyncObject.notify();
